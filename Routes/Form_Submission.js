@@ -240,9 +240,9 @@ router.get('/:type', (req, res) => {
     // Define the SQL query based on the type
     let query = '';
     if (type === 'National') {
-        query = 'SELECT Created_at FROM Journal where Journal_Type = "National Journal" ORDER BY ID';
+        query = 'SELECT Created_at FROM Journal where Journal_Type = "National" ';
     } else if (type === 'International') {
-        query = 'SELECT Created_at FROM Journal where Journal_Type = "International" ORDER BY ID';
+        query = 'SELECT Created_at FROM Journal where Journal_Type = "International" ';
     }
     else {
         return res.status(400).json({ message: "Invalid type" });
@@ -254,12 +254,96 @@ router.get('/:type', (req, res) => {
             console.error("Database error:", error);
             return res.status(500).json({ message: "Database error", error: error.message });
         }
-        res.status(200).json(results); // Send the results as JSON response
+        const uniqueYears = [...new Set(results.map(item => new Date(item.Created_at).getFullYear()))];
+        const sortYear = uniqueYears.sort((a, b) => a - b); // Sort the years in ascending order
+        res.status(200).json(sortYear); // Send the results as JSON response
     });
 })
 
 
 
+
+
+router.get('/:type/:year', (req, res) => {
+
+    const { type, year } = req.params; // Get the type from the URL parameter
+    // Define the SQL query based on the type
+    let query = '';
+    if (type === 'National') {
+        query = `SELECT Volume FROM Journal where Journal_Type = "National" AND YEAR(Created_at) = ? `;
+    } else if (type === 'International') {
+        query = `SELECT Volume FROM Journal where Journal_Type = "International" AND YEAR(Created_at) = ? `;
+    }
+    else {
+        return res.status(400).json({ message: "Invalid type" });
+    }
+
+    // Execute the query
+    pool.query(query, [year], (error, results) => {
+        if (error) {
+            console.error("Database error:", error);
+            return res.status(500).json({ message: "Database error", error: error.message });
+        }
+        const uniqueVolumes = [...new Set(results.map(item => item.Volume))];
+        const sortVolume = uniqueVolumes.sort((a, b) => a - b); // Sort the years in ascending order
+        res.status(200).json(sortVolume); // Send the results as JSON response
+    });
+})
+
+
+router.get('/:type/:year/:vol', (req, res) => {
+
+    const { type, year , vol } = req.params; // Get the type from the URL parameter
+    // Define the SQL query based on the type
+    let query = '';
+    if (type === 'National') {
+        query = `SELECT Issue FROM Journal where Journal_Type = "National" AND YEAR(Created_at) = ? And Volume = ? `;
+    } else if (type === 'International') {
+        query = `SELECT Issue FROM Journal where Journal_Type = "International" AND YEAR(Created_at) = ? And Volume = ?  `;
+    }
+    else {
+        return res.status(400).json({ message: "Invalid type" });
+    }
+
+    // Execute the query
+    pool.query(query, [year , vol], (error, results) => {
+        if (error) {
+            console.error("Database error:", error);
+            return res.status(500).json({ message: "Database error", error: error.message });
+        }
+        const uniqueIssue = [...new Set(results.map(item => item.Issue))];
+        const sortIssue = uniqueIssue.sort((a, b) => a - b); // Sort the years in ascending order
+        res.status(200).json(sortIssue); // Send the results as JSON response
+    });
+})
+
+
+
+router.get('/:type/:year/:vol/:issue', (req, res) => {
+
+    const { type, year , vol , issue } = req.params; // Get the type from the URL parameter
+    // Define the SQL query based on the type
+    let query = '';
+    if (type === 'National') {
+        query = `SELECT * FROM Journal where Journal_Type = "National" AND YEAR(Created_at) = ? And Volume = ? AND Issue = ?`;
+    } else if (type === 'International') {
+        query = `SELECT * FROM Journal where Journal_Type = "International" AND YEAR(Created_at) = ? And Volume = ? AND Issue = ? `;
+    }
+    else {
+        return res.status(400).json({ message: "Invalid type" });
+    }
+
+    // Execute the query
+    pool.query(query, [year , vol , issue], (error, results) => {
+        if (error) {
+            console.error("Database error:", error);
+            return res.status(500).json({ message: "Database error", error: error.message });
+        }
+        // const uniqueIssue = [...new Set(results.map(item => item.Issue))];
+        // const sortIssue = uniqueIssue.sort((a, b) => a - b); // Sort the years in ascending order
+        res.status(200).json(results); // Send the results as JSON response
+    });
+})
 
 
 
