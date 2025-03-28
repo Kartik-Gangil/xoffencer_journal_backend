@@ -1,26 +1,28 @@
 const express = require("express");
 const router = express.Router();
 const fs = require("fs");
-
+const send = require("../Vol_Issue");
 const pool = require("../Database");
 const GetUploadMiddleWare = require('../multer');
 
 // File fields for multer
 const JournalFormFields = [
-    { name: "paper", maxCount: 1 },
+    { name: "paperIcon", maxCount: 1 },
     { name: "photo", maxCount: 1 },
-    { name: "certificate", maxCount: 1 },
+    { name: "marksheet", maxCount: 1 },
 ];
 
 const uploadJournal = GetUploadMiddleWare('./uploads/Journal')
 
 // API Route
+console.log(new Date().getDate())
 router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), async (req, res) => {
 
+
     try {
-        const paperPath = req.files["paper"] ? req.files["paper"][0].path : null;
+        const paperPath = req.files["paperIcon"] ? req.files["paperIcon"][0].path : null;
         const photoPath = req.files["photo"] ? req.files["photo"][0].path : null;
-        const certificatePath = req.files["certificate"] ? req.files["certificate"][0].path : null;
+        const certificatePath = req.files["marksheet"] ? req.files["marksheet"][0].path : null;
 
 
         // Validate email format
@@ -30,19 +32,19 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
         }
 
         // Extract fields from request
-        const { journal, author, name, subject, branch, education, abstract, address, contact, email, Title, secondauthor } = req.body;
-
+        const { journal, author, name, subject, branch, education, abstract, address, contact, email, paper, secondauthor } = req.body;
+        const { volume, issue } = send()
         // Insert data into database
         const query = `INSERT INTO Journal (
             Journal_Type, Title_of_paper, Author_Name, Fathers_Husbands_name,
             subject, Branch, Education, Second_Author_Guide_Name,
-            Abstract, Address, Contact, Email, Paper, Photo, Certificate
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            Abstract, Address, Contact, Email, Paper, Photo, Certificate , Volume , Issue
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ?)`;
 
         try {
             const results = pool.query(query, [
-                journal, Title, author, name, subject, branch, education, secondauthor,
-                abstract, address, contact, email, paperPath, photoPath, certificatePath
+                journal, paper, author, name, subject, branch, education, secondauthor,
+                abstract, address, contact, email, paperPath, photoPath, certificatePath, volume, issue
             ]);
 
             return res.status(201).json({
@@ -229,6 +231,32 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
 
 
 
+// fetching data
+
+router.get('/:type', (req, res) => {
+
+    const type = req.params.type; // Get the type from the URL parameter
+
+    // Define the SQL query based on the type
+    let query = '';
+    if (type === 'National') {
+        query = 'SELECT Created_at FROM Journal where Journal_Type = "National Journal" ORDER BY ID';
+    } else if (type === 'International') {
+        query = 'SELECT Created_at FROM Journal where Journal_Type = "International" ORDER BY ID';
+    }
+    else {
+        return res.status(400).json({ message: "Invalid type" });
+    }
+
+    // Execute the query
+    pool.query(query, (error, results) => {
+        if (error) {
+            console.error("Database error:", error);
+            return res.status(500).json({ message: "Database error", error: error.message });
+        }
+        res.status(200).json(results); // Send the results as JSON response
+    });
+})
 
 
 

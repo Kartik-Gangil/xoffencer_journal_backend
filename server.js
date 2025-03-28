@@ -11,25 +11,28 @@ app.use(cors({
 
 
 pool.query(`
-    
-create table if not exists Journal (
-   id int primary key auto_increment,
-    Journal_Type varchar(100) not null,
-    Title_of_paper varchar(100) not null,
-    Author_Name varchar(100) not null,
-    Fathers_Husbands_name varchar(100) not null,
-    subject varchar(100) not null,
-    Branch varchar(200),
-    Education varchar(100) not null,
-    Second_Author_Guide_Name varchar(100),
-    Abstract text not null,
-    Address varchar(200) not null,
-    Contact numeric not null,
-    Email varchar(30) not null,
-    Paper varchar(100) not null,
-	Photo varchar(100) not null,
-	Certificate varchar(100) not null
-    ); ` , (err, results) => {
+   CREATE TABLE IF NOT EXISTS Journal (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    Journal_Type VARCHAR(100) NOT NULL,
+    Title_of_paper VARCHAR(100) NOT NULL,
+    Author_Name VARCHAR(100) NOT NULL,
+    Fathers_Husbands_name VARCHAR(100) NOT NULL,
+    subject VARCHAR(100) NOT NULL,
+    Branch VARCHAR(200),
+    Education VARCHAR(100) NOT NULL,
+    Second_Author_Guide_Name VARCHAR(100),
+    Abstract TEXT NOT NULL,
+    Address VARCHAR(200) NOT NULL,
+    Contact VARCHAR(20) NOT NULL,  -- Changed from NUMERIC to VARCHAR(20)
+    Email VARCHAR(100) NOT NULL,   -- Increased length for better email support
+    Paper VARCHAR(100) NOT NULL,
+    Photo VARCHAR(100) NOT NULL,
+    Certificate VARCHAR(100) NOT NULL,
+    Created_at DATETIME DEFAULT CURRENT_TIMESTAMP,  -- Changed DATE to DATETIME
+    Volume int,
+    Issue int 
+);
+` , (err, results) => {
     if (err) {
         console.error("Error executing query:", err);
     } else {
