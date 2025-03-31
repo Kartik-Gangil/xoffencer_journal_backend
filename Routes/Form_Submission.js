@@ -4,6 +4,7 @@ const fs = require("fs");
 const send = require("../Vol_Issue");
 const pool = require("../Database");
 const GetUploadMiddleWare = require('../multer');
+const sendEmail = require("../Mail");
 
 // File fields for multer
 const JournalFormFields = [
@@ -46,7 +47,7 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
                 journal, paper, author, name, subject, branch, education, secondauthor,
                 abstract, address, contact, email, paperPath, photoPath, certificatePath, volume, issue
             ]);
-
+            sendEmail(email, author)
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
                 submissionId: results.insertId,
@@ -309,7 +310,7 @@ router.get('/:type/:year/:vol', (req, res) => {
     }
 
     // Execute the query
-    pool.query(query, [year , number], (error, results) => {
+    pool.query(query, [year, number], (error, results) => {
         if (error) {
             console.error("Database error:", error);
             return res.status(500).json({ message: "Database error", error: error.message });
@@ -340,21 +341,55 @@ router.get('/:type/:year/:vol/:issue', (req, res) => {
     }
 
     // Execute the query
-    pool.query(query, [year , Volume , Issue], (error, results) => {
+    pool.query(query, [year, Volume, Issue], (error, results) => {
         if (error) {
             console.error("Database error:", error);
             return res.status(500).json({ message: "Database error", error: error.message });
         }
-        // const uniqueIssue = [...new Set(results.map(item => item.Issue))];
-        // const sortIssue = uniqueIssue.sort((a, b) => a - b); // Sort the years in ascending order
+      
         res.status(200).json(results); // Send the results as JSON response
     });
 })
 
 
+// download the file
 
+router.post('/download/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log("Requested ID:", id);
 
+        const query = `SELECT * FROM Journal WHERE id = ?`;
+        pool.query(query, [id], (error, results) => {
+            if (error) {
+                console.error("Database error:", error);
+                return res.status(500).json({ message: "Database error", error: error.message });
+            }
 
+            if (results.length === 0) {
+                return res.status(404).json({ message: "File not found" });
+            }
+
+            const filePath = results[0].Paper; // Assuming this contains the full file path
+            console.log("File Path:", filePath);
+
+            // Set correct headers for PDF download
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename="${results[0].Title_of_paper}.pdf"`);
+
+            // Send the file
+            res.download(filePath, (err) => {
+                if (err) {
+                    console.error("File download error:", err);
+                    res.status(500).send('Error downloading file');
+                }
+            });
+        });
+    } catch (err) {
+        console.error("Server Error:", err);
+        res.status(500).json({ message: 'Server Error', error: err.message });
+    }
+});
 
 
 
