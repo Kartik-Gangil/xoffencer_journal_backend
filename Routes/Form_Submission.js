@@ -5,6 +5,7 @@ const send = require("../Vol_Issue");
 const pool = require("../Database");
 const GetUploadMiddleWare = require('../multer');
 const sendEmail = require("../Mail");
+const mergePDFs = require("../MergePDF");
 
 // File fields for multer
 const JournalFormFields = [
@@ -35,6 +36,7 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
         // Extract fields from request
         const { journal, author, name, subject, branch, education, abstract, address, contact, email, paper, secondauthor } = req.body;
         const { volume, issue } = send()
+        // console.log({ volume, issue })
         // Insert data into database
         const query = `INSERT INTO Journal (
             Journal_Type, Title_of_paper, Author_Name, Fathers_Husbands_name,
@@ -346,7 +348,7 @@ router.get('/:type/:year/:vol/:issue', (req, res) => {
             console.error("Database error:", error);
             return res.status(500).json({ message: "Database error", error: error.message });
         }
-      
+
         res.status(200).json(results); // Send the results as JSON response
     });
 })
@@ -392,9 +394,69 @@ router.post('/download/:id', async (req, res) => {
 });
 
 
+router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
+    try {
+        const { year, vol, issue } = req.params;
+        const Volume = vol.includes(" ") ? vol.split(" ")[1] : vol;
+        const Issue = issue.includes(" ") ? issue.split(" ")[1] : issue;
+        const query = `SELECT Title_of_paper, Paper FROM Journal WHERE YEAR(created_at) = ? AND volume = ? AND issue = ?`;
+        const title = `Magazine_of_Volume_${Volume}_Issue_${Issue}`;
+        const filePath = `./uploads/Magazine/${title}.pdf`;
 
+        // Check if the file already exists asynchronously
+        let fileExists = false;
+        try {
+            await fs.promises.access(filePath);
+            fileExists = true;
+        } catch (err) {
+            fileExists = false;
+        }
 
+        if (fileExists) {
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename="${title}.pdf"`);
+            return res.download(filePath, (err) => {
+                if (err) {
+                    console.error("File download error:", err);
+                    return res.status(500).send('Error downloading file');
+                }
+            });
+        }
 
+        // If file doesn't exist, fetch data from DB
+        const results = await new Promise((resolve, reject) => {
+            pool.query(query, [year, Volume, Issue], (error, results) => {
+                if (error) reject(error);
+                else resolve(results);
+            });
+        });
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "File not found" });
+        }
+
+        const pdfFiles = results.map(item => item.Paper).filter(file => file); // Ensure valid paths
+
+        if (pdfFiles.length === 0) {
+            return res.status(404).json({ message: "No valid PDF files found to merge" });
+        }
+
+        await mergePDFs(filePath, pdfFiles);
+
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${title}.pdf"`);
+        res.download(filePath, (err) => {
+            if (err) {
+                console.error("File download error:", err);
+                res.status(500).send('Error downloading file');
+            }
+        });
+
+    } catch (err) {
+        console.error("Server Error:", err);
+        res.status(500).json({ message: 'Server Error', error: err.message });
+    }
+});
 
 
 

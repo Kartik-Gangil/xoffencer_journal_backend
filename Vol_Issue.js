@@ -2,54 +2,23 @@
 function send() {
     let volume;
     let issue;
-    if(new Date().getMonth() >=0 && new Date().getMonth() <= 3) {
-        volume =1;
-        if(new Date().getMonth() == 0 ) {
-            issue = 1;
-        }
-        else if(new Date().getMonth() == 1 ) {
-            issue = 2;
-        }
-        else if(new Date().getMonth() == 2 ) {
-            issue = 3;
-        }
+    let month = new Date().getMonth(); // Get the current month (0-based)
+
+    if (month >= 0 && month <= 2) { // Q1 (Jan - Mar)
+        volume = 1;
+        issue = month + 1; // Jan = 0 -> Issue 1, Feb = 1 -> Issue 2, Mar = 2 -> Issue 3
     }
-    else if(new Date().getMonth() >=4 && new Date().getMonth() <= 6) {
-        volume =2;
-        if(new Date().getMonth() == 3 ) {
-            issue = 1;
-        }
-        else if(new Date().getMonth() == 4 ) {
-            issue = 2;
-        }
-        else if(new Date().getMonth() == 5 ) {
-            issue = 3;
-        }
-        
+    else if (month >= 3 && month <= 5) { // Q2 (Apr - Jun)
+        volume = 2;
+        issue = month - 2; // Apr = 3 -> Issue 1, May = 4 -> Issue 2, Jun = 5 -> Issue 3
     }
-    else if(new Date().getMonth() >=7 && new Date().getMonth() <= 9) {
-        volume =3;
-        if(new Date().getMonth() == 6 ) {
-            issue = 1;
-        }
-        else if(new Date().getMonth() == 7 ) {
-            issue = 2;
-        }
-        else if(new Date().getMonth() == 8 ) {
-            issue = 3;
-        }
+    else if (month >= 6 && month <= 8) { // Q3 (Jul - Sep)
+        volume = 3;
+        issue = month - 5; // Jul = 6 -> Issue 1, Aug = 7 -> Issue 2, Sep = 8 -> Issue 3
     }
-    else if(new Date().getMonth() >=10 && new Date().getMonth() <= 12) {
-        volume =4;
-        if(new Date().getMonth() == 9 ) {
-            issue = 1;
-        }
-        else if(new Date().getMonth() == 10 ) {
-            issue = 2;
-        }
-        else if(new Date().getMonth() == 11 ) {
-            issue = 3;
-        }
+    else if (month >= 9 && month <= 11) { // Q4 (Oct - Dec)
+        volume = 4;
+        issue = month - 8; // Oct = 9 -> Issue 1, Nov = 10 -> Issue 2, Dec = 11 -> Issue 3
     }
     return { volume, issue };
     
