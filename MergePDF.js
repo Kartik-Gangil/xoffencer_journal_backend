@@ -33,12 +33,32 @@ async function mergePdfs(outputPath, files) {
         pages.forEach((page, index) => {
             const { width, height } = page.getSize();
 
-            const xPos = 93.5;
-            const yPos = height - 55;
 
-            page.drawText(`volume 1 issue 1`, {
-                x: xPos,
-                y: yPos,
+            // VARSHA RESEARCH ORGANIZATION
+            page.drawText(`VARSHA RESEARCH ORGANIZATION`, {
+                x: 93.5,
+                y: height - 42.5,
+                size: 8,
+                color: rgb(0, 0, 0),
+            });
+            // volume and issue
+            page.drawText(`volume 1 , issue 1`, {
+                x: 93.5,
+                y: height - 55,
+                size: 8,
+                color: rgb(0, 0, 0),
+            });
+            // January 2025, ISSN: XXXX – XXXX
+            page.drawText(`January 2025, ISSN: XXXX – XXXX`, {
+                x: 93.5,
+                y: height - 68,
+                size: 8,
+                color: rgb(0, 0, 0),
+            });
+            // Impact Factor: 0.75 – 0.25
+            page.drawText(`Impact Factor: 0.75 – 0.25`, {
+                x: 93.5,
+                y: height - 81.5,
                 size: 8,
                 color: rgb(0, 0, 0),
             });
