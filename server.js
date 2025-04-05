@@ -30,7 +30,9 @@ pool.query(`
     Certificate VARCHAR(100) NOT NULL,
     Created_at DATETIME DEFAULT CURRENT_TIMESTAMP,  -- Changed DATE to DATETIME
     Volume int,
-    Issue int 
+    Issue int ,
+    isPublished boolean DEFAULT false,
+    Publication_date DATE DEFAULT NULL,
 );
 ` , (err, results) => {
     if (err) {
