@@ -6,6 +6,7 @@ const pool = require("../Database");
 const GetUploadMiddleWare = require('../multer');
 const sendEmail = require("../Mail");
 const mergePDFs = require("../MergePDF");
+const editSinglePdf = require("../editSinglePdf");
 const path = require("path");
 
 // File fields for multer
@@ -363,7 +364,7 @@ router.post('/download/:id', async (req, res) => {
         console.log("Requested ID:", id);
 
         const query = `SELECT * FROM Journal WHERE id = ?`;
-        pool.query(query, [id], (error, results) => {
+        pool.query(query, [id], async (error, results) => {
             if (error) {
                 console.error("Database error:", error);
                 return res.status(500).json({ message: "Database error", error: error.message });
@@ -375,18 +376,31 @@ router.post('/download/:id', async (req, res) => {
 
             const filePath = results[0].Paper; // Assuming this contains the full file path
             console.log("File Path:", filePath);
-            let originalPath = filePath;
-            let safeFilename = path.basename(originalPath).replace(/[^\w.-]/g, '_'); // replace unsafe chars
+
+            let originalPath = path.resolve(filePath);;
+            let safeFilename = 'edited_' + path.basename(filePath); // replace unsafe chars
+            const outputPath = path.resolve('./uploads/temp', safeFilename); // save to /temp folder
+
+            // console.log("Input Path:", originalPath);
+            // console.log("Output Path:", outputPath);
+
+            if (!fs.existsSync('./uploads/temp')) fs.mkdirSync('./uploads/temp');
+
+            await editSinglePdf(originalPath, outputPath, { publish: results[0].Created_at, vol: results[0].Volume, issue: results[0].Issue })
 
             // Set correct headers for PDF download
             res.setHeader("Content-Type", "application/pdf");
             res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}.pdf"`);
 
             // Send the file
-            res.download(path.resolve(originalPath), safeFilename, (err) => {
+            res.download(outputPath, (err) => {
                 if (err) {
                     console.error("File download error:", err);
                     res.status(500).send('Error downloading file');
+                }
+                else {
+                    // Delete file after download
+                    fs.unlinkSync(outputPath);
                 }
             });
         });
@@ -402,7 +416,7 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
         const { year, vol, issue } = req.params;
         const Volume = vol.includes(" ") ? vol.split(" ")[1] : vol;
         const Issue = issue.includes(" ") ? issue.split(" ")[1] : issue;
-        const query = `SELECT Title_of_paper, Paper FROM Journal WHERE YEAR(created_at) = ? AND volume = ? AND issue = ?`;
+        const query = `SELECT Title_of_paper, Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND volume = ? AND issue = ?`;
         const title = `Magazine_of_Volume_${Volume}_Issue_${Issue}`;
         const filePath = `./uploads/Magazine/${title}.pdf`;
 
@@ -438,13 +452,19 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
             return res.status(404).json({ message: "File not found" });
         }
 
-        const pdfFiles = results.map(item => item.Paper).filter(file => file); // Ensure valid paths
+        const pdfData = results
+            .filter(item => item.Paper)
+            .map(item => ({
+                file: item.Paper,
+                date: item.Created_at,
+            })); // Ensure valid paths
 
-        if (pdfFiles.length === 0) {
+
+        if (pdfData.length === 0) {
             return res.status(404).json({ message: "No valid PDF files found to merge" });
         }
 
-        await mergePDFs(filePath, pdfFiles);
+        await mergePDFs(filePath, pdfData, Volume, Issue);
 
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename="${title}.pdf"`);
@@ -452,6 +472,9 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
             if (err) {
                 console.error("File download error:", err);
                 res.status(500).send('Error downloading file');
+            } else {
+                // Delete file after download
+                fs.unlinkSync(filePath);
             }
         });
 

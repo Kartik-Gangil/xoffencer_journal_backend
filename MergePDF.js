@@ -1,8 +1,27 @@
 const fs = require("fs");
 const path = require("path");
 const { PDFDocument, rgb } = require("pdf-lib");
+function date(dt) {
+    try {
+        const dateObj = new Date(dt); // Handles both Date objects and valid date strings
+        if (isNaN(dateObj.getTime())) {
+            throw new Error("Invalid date input");
+        }
 
-async function mergePdfs(outputPath, files) {
+        const year = dateObj.getFullYear();
+        // const monthIndex = dateObj.getMonth(); // 0-based
+        const monthName = dateObj.toLocaleString('default', { month: 'long' });
+
+        return { monthName, year };
+    } catch (err) {
+        console.error("❌ Failed to parse date:", dt);
+        return { monthName: 'Invalid', year: 'Invalid' };
+    }
+}
+
+
+async function mergePdfs(outputPath, pdfData, vol, issue) {
+    let MonthAndYear = null;
     try {
         const mergedPdf = await PDFDocument.create();
 
@@ -10,7 +29,12 @@ async function mergePdfs(outputPath, files) {
         const outputDir = path.dirname(outputPath);
         fs.mkdirSync(outputDir, { recursive: true });
 
-        for (const file of files) {
+        for (const { file, date } of pdfData) {
+
+            if (!MonthAndYear && date) {
+                MonthAndYear = date; // Save the first available date
+                console.log(date instanceof Date)
+            }
             try {
                 // ✅ Check if file exists before reading
                 if (!fs.existsSync(file)) {
@@ -29,6 +53,7 @@ async function mergePdfs(outputPath, files) {
         }
 
         // ✅ Add page numbers
+        const { monthName, year } = MonthAndYear ? date(MonthAndYear.toString()) : { monthName: "Unknown", year: "Unknown" };
         const pages = mergedPdf.getPages();
         pages.forEach((page, index) => {
             const { width, height } = page.getSize();
@@ -42,21 +67,21 @@ async function mergePdfs(outputPath, files) {
                 color: rgb(0, 0, 0),
             });
             // volume and issue
-            page.drawText(`volume 1 , issue 1`, {
+            page.drawText(`Volume ${vol} , Issue ${issue}`, {
                 x: 93.5,
                 y: height - 55,
                 size: 8,
                 color: rgb(0, 0, 0),
             });
             // January 2025, ISSN: XXXX – XXXX
-            page.drawText(`January 2025, ISSN: XXXX – XXXX`, {
+            page.drawText(`${monthName} ${year}, ISSN: XXXX – XXXX`, {
                 x: 93.5,
                 y: height - 68,
                 size: 8,
                 color: rgb(0, 0, 0),
             });
             // Impact Factor: 0.75 – 0.25
-            page.drawText(`Impact Factor: 0.75 – 0.25`, {
+            page.drawText(`Impact Factor: 0.75 – 2.75`, {
                 x: 93.5,
                 y: height - 81.5,
                 size: 8,
@@ -66,7 +91,7 @@ async function mergePdfs(outputPath, files) {
 
             page.drawText(`${index + 1}`, {
                 x: width / 1.65,
-                y: 37,
+                y: 52,
                 size: 10,
                 color: rgb(0, 0, 0),
             });
@@ -82,4 +107,6 @@ async function mergePdfs(outputPath, files) {
     }
 }
 
-module.exports = mergePdfs;
+
+
+module.exports =  mergePdfs;
