@@ -32,7 +32,7 @@ pool.query(`
     Volume int,
     Issue int ,
     isPublished boolean DEFAULT false,
-    Publication_date DATE DEFAULT NULL,
+    Publication_date DATE DEFAULT NULL
 );
 ` , (err, results) => {
     if (err) {
