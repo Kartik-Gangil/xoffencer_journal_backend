@@ -6,6 +6,7 @@ const pool = require("../Database");
 const GetUploadMiddleWare = require('../multer');
 const sendEmail = require("../Mail");
 const mergePDFs = require("../MergePDF");
+const path = require("path");
 
 // File fields for multer
 const JournalFormFields = [
@@ -374,13 +375,15 @@ router.post('/download/:id', async (req, res) => {
 
             const filePath = results[0].Paper; // Assuming this contains the full file path
             console.log("File Path:", filePath);
+            let originalPath = filePath;
+            let safeFilename = path.basename(originalPath).replace(/[^\w.-]/g, '_'); // replace unsafe chars
 
             // Set correct headers for PDF download
             res.setHeader("Content-Type", "application/pdf");
-            res.setHeader("Content-Disposition", `attachment; filename="${results[0].Title_of_paper}.pdf"`);
+            res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}.pdf"`);
 
             // Send the file
-            res.download(filePath, (err) => {
+            res.download(path.resolve(originalPath), safeFilename, (err) => {
                 if (err) {
                     console.error("File download error:", err);
                     res.status(500).send('Error downloading file');
