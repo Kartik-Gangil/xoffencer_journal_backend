@@ -8,6 +8,7 @@ const sendEmail = require("../Mail");
 const mergePDFs = require("../MergePDF");
 const editSinglePdf = require("../editSinglePdf");
 const path = require("path");
+const CreateIndex = require("../createIndex");
 
 // File fields for multer
 const JournalFormFields = [
@@ -54,7 +55,7 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
             sendEmail(email, author)
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
-                status:true,
+                status: true,
                 submissionId: results.insertId,
                 files: { paper: paperPath, photo: photoPath, certificate: certificatePath },
             });
@@ -67,7 +68,7 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
 
             return res.status(500).json({
                 message: "Database error",
-                status:false,
+                status: false,
                 error: dbError.message
             });
         }
@@ -80,7 +81,7 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
 
         return res.status(500).json({
             message: "Internal server error",
-            status:false,
+            status: false,
             error: process.env.NODE_ENV === "development" ? error.message : "An unexpected error occurred",
         });
     }
@@ -141,7 +142,7 @@ router.post("/form-for-MemberBoard", uploadMemberBoard.fields(MemberBoardFormFie
             // console.log(results)
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
-                status:true,
+                status: true,
                 submissionId: results.insertId,
                 files: { DOB: datebirthPath, photo: photoPath, marksheet: MarksheetPath },
             });
@@ -154,7 +155,7 @@ router.post("/form-for-MemberBoard", uploadMemberBoard.fields(MemberBoardFormFie
 
             return res.status(500).json({
                 message: "Database error",
-                status:false,
+                status: false,
                 error: dbError.message
             });
         }
@@ -167,7 +168,7 @@ router.post("/form-for-MemberBoard", uploadMemberBoard.fields(MemberBoardFormFie
 
         return res.status(500).json({
             message: "Internal server error",
-            status:false,
+            status: false,
             error: process.env.NODE_ENV === "development" ? error.message : "An unexpected error occurred",
         });
     }
@@ -211,7 +212,7 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
             // console.log(results)
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
-                status:true,
+                status: true,
                 submissionId: results.insertId,
                 files: { photo: photoPath }
             });
@@ -224,7 +225,7 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
 
             return res.status(500).json({
                 message: "Database error",
-                status:false,
+                status: false,
                 error: dbError.message
             });
         }
@@ -237,7 +238,7 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
 
         return res.status(500).json({
             message: "Internal server error",
-            status:false,
+            status: false,
             error: process.env.NODE_ENV === "development" ? error.message : "An unexpected error occurred",
         });
     }
@@ -266,7 +267,7 @@ router.get('/:type', (req, res) => {
     pool.query(query, (error, results) => {
         if (error) {
             console.error("Database error:", error);
-            return res.status(500).json({ message: "Database error", status:false, error: error.message });
+            return res.status(500).json({ message: "Database error", status: false, error: error.message });
         }
         const uniqueYears = [...new Set(results.map(item => new Date(item.Created_at).getFullYear()))];
         const sortYear = uniqueYears.sort((a, b) => a - b); // Sort the years in ascending order
@@ -282,21 +283,21 @@ router.post('/contact', async (req, res) => {
         const { name, email, phone, message } = req.body;
         console.log({ name, email, phone, message })
         if (!name || !email || !phone || !message) {
-            return res.status(400).json({ message: "All fields are required", status:false });
+            return res.status(400).json({ message: "All fields are required", status: false });
         }
         const query = `Insert into Contact_us (Name, Email, PhoneNo, Message) values (?, ?, ?, ?)`;
         pool.query(query, [name, email, phone, message], (error, results) => {
             if (error) {
                 console.error("Database error:", error);
-                return res.status(500).json({ message: "Database error", status:false, error: error.message });
+                return res.status(500).json({ message: "Database error", status: false, error: error.message });
             }
         })
-        return res.status(200).json({ message: "Your message has been sent successfully", status:true });
+        return res.status(200).json({ message: "Your message has been sent successfully", status: true });
 
     }
     catch (err) {
         console.error("Server Error:", err);
-        res.status(500).json({ message: 'Server Error', status:false, error: err.message });
+        res.status(500).json({ message: 'Server Error', status: false, error: err.message });
     }
 })
 
@@ -451,7 +452,7 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
         const { year, vol, issue } = req.params;
         const Volume = vol.includes(" ") ? vol.split(" ")[1] : vol;
         const Issue = issue.includes(" ") ? issue.split(" ")[1] : issue;
-        const query = `SELECT Title_of_paper, Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND volume = ? AND issue = ?`;
+        const query = `SELECT Title_of_paper,Author_Name , Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND volume = ? AND issue = ?`;
         const title = `Magazine_of_Volume_${Volume}_Issue_${Issue}`;
         const filePath = `./uploads/Magazine/${title}.pdf`;
 
@@ -493,13 +494,20 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
                 file: item.Paper,
                 date: item.Created_at,
             })); // Ensure valid paths
-
+        
+        const pdf = results
+            .map(item => ({
+                title: item.Title_of_paper,
+                author: item.Author_Name,
+            })); 
+        
 
         if (pdfData.length === 0) {
             return res.status(404).json({ message: "No valid PDF files found to merge" });
         }
-
-        await mergePDFs(filePath, pdfData, Volume, Issue);
+        await CreateIndex('./uploads/index.pdf', './uploads/temp/updated_output.pdf', pdf)
+        const StaticPdf = './uploads/temp/updated_output.pdf'
+        await mergePDFs(filePath, StaticPdf, pdfData, Volume, Issue);
 
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename="${title}.pdf"`);
@@ -510,6 +518,7 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
             } else {
                 // Delete file after download
                 fs.unlinkSync(filePath);
+                fs.unlinkSync(StaticPdf);
             }
         });
 

@@ -20,7 +20,7 @@ function date(dt) {
 }
 
 
-async function mergePdfs(outputPath, pdfData, vol, issue) {
+async function mergePdfs(outputPath, staticPdfPath , pdfData, vol, issue) {
     let MonthAndYear = null;
     try {
         const mergedPdf = await PDFDocument.create();
@@ -29,6 +29,13 @@ async function mergePdfs(outputPath, pdfData, vol, issue) {
         const outputDir = path.dirname(outputPath);
         fs.mkdirSync(outputDir, { recursive: true });
 
+        if (staticPdfPath && fs.existsSync(staticPdfPath)) {
+            const staticPdfBytes = fs.readFileSync(staticPdfPath);
+            const staticPdfDoc = await PDFDocument.load(staticPdfBytes);
+            const staticPages = await mergedPdf.copyPages(staticPdfDoc, staticPdfDoc.getPageIndices());
+            staticPages.forEach(page => mergedPdf.addPage(page));
+            console.log(`✅ Added static PDF: ${staticPdfPath}`);
+        }
         for (const { file, date } of pdfData) {
 
             if (!MonthAndYear && date) {
