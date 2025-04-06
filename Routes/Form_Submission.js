@@ -54,6 +54,7 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
             sendEmail(email, author)
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
+                status:true,
                 submissionId: results.insertId,
                 files: { paper: paperPath, photo: photoPath, certificate: certificatePath },
             });
@@ -66,6 +67,7 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
 
             return res.status(500).json({
                 message: "Database error",
+                status:false,
                 error: dbError.message
             });
         }
@@ -78,6 +80,7 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
 
         return res.status(500).json({
             message: "Internal server error",
+            status:false,
             error: process.env.NODE_ENV === "development" ? error.message : "An unexpected error occurred",
         });
     }
@@ -138,6 +141,7 @@ router.post("/form-for-MemberBoard", uploadMemberBoard.fields(MemberBoardFormFie
             // console.log(results)
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
+                status:true,
                 submissionId: results.insertId,
                 files: { DOB: datebirthPath, photo: photoPath, marksheet: MarksheetPath },
             });
@@ -150,6 +154,7 @@ router.post("/form-for-MemberBoard", uploadMemberBoard.fields(MemberBoardFormFie
 
             return res.status(500).json({
                 message: "Database error",
+                status:false,
                 error: dbError.message
             });
         }
@@ -162,6 +167,7 @@ router.post("/form-for-MemberBoard", uploadMemberBoard.fields(MemberBoardFormFie
 
         return res.status(500).json({
             message: "Internal server error",
+            status:false,
             error: process.env.NODE_ENV === "development" ? error.message : "An unexpected error occurred",
         });
     }
@@ -205,6 +211,7 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
             // console.log(results)
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
+                status:true,
                 submissionId: results.insertId,
                 files: { photo: photoPath }
             });
@@ -217,6 +224,7 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
 
             return res.status(500).json({
                 message: "Database error",
+                status:false,
                 error: dbError.message
             });
         }
@@ -229,6 +237,7 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
 
         return res.status(500).json({
             message: "Internal server error",
+            status:false,
             error: process.env.NODE_ENV === "development" ? error.message : "An unexpected error occurred",
         });
     }
@@ -257,7 +266,7 @@ router.get('/:type', (req, res) => {
     pool.query(query, (error, results) => {
         if (error) {
             console.error("Database error:", error);
-            return res.status(500).json({ message: "Database error", error: error.message });
+            return res.status(500).json({ message: "Database error", status:false, error: error.message });
         }
         const uniqueYears = [...new Set(results.map(item => new Date(item.Created_at).getFullYear()))];
         const sortYear = uniqueYears.sort((a, b) => a - b); // Sort the years in ascending order
@@ -273,21 +282,21 @@ router.post('/contact', async (req, res) => {
         const { name, email, phone, message } = req.body;
         console.log({ name, email, phone, message })
         if (!name || !email || !phone || !message) {
-            return res.status(400).json({ message: "All fields are required" });
+            return res.status(400).json({ message: "All fields are required", status:false });
         }
         const query = `Insert into Contact_us (Name, Email, PhoneNo, Message) values (?, ?, ?, ?)`;
         pool.query(query, [name, email, phone, message], (error, results) => {
             if (error) {
                 console.error("Database error:", error);
-                return res.status(500).json({ message: "Database error", error: error.message });
+                return res.status(500).json({ message: "Database error", status:false, error: error.message });
             }
         })
-        return res.status(200).json({ message: "Your message has been sent successfully" });
+        return res.status(200).json({ message: "Your message has been sent successfully", status:true });
 
     }
     catch (err) {
         console.error("Server Error:", err);
-        res.status(500).json({ message: 'Server Error', error: err.message });
+        res.status(500).json({ message: 'Server Error', status:false, error: err.message });
     }
 })
 
