@@ -4,7 +4,7 @@ const sql = require("mysql2")
 const pool = sql.createPool({
     host: 'localhost',   // Change this if using remote DB
     user: 'root',        // Your MySQL username
-    password: 'K@rtik@123', // Your MySQL password
+    password: '123', // Your MySQL password
     database: 'journal_Database',
     port: 3306,
     waitForConnections: true,
