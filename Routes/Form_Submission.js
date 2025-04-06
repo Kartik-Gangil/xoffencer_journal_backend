@@ -266,6 +266,32 @@ router.get('/:type', (req, res) => {
 })
 
 
+// contact from api
+
+router.post('/contact', async (req, res) => {
+    try {
+        const { name, email, phone, message } = req.body;
+        console.log({ name, email, phone, message })
+        if (!name || !email || !phone || !message) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+        const query = `Insert into Contact_us (Name, Email, PhoneNo, Message) values (?, ?, ?, ?)`;
+        pool.query(query, [name, email, phone, message], (error, results) => {
+            if (error) {
+                console.error("Database error:", error);
+                return res.status(500).json({ message: "Database error", error: error.message });
+            }
+        })
+        return res.status(200).json({ message: "Your message has been sent successfully" });
+
+    }
+    catch (err) {
+        console.error("Server Error:", err);
+        res.status(500).json({ message: 'Server Error', error: err.message });
+    }
+})
+
+
 
 // getting volume
 

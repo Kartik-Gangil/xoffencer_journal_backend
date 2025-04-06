@@ -96,6 +96,24 @@ pool.query(`
     }
 });
 
+pool.query(`
+   create table if not exists Contact_us(
+    id int primary key auto_increment,
+    Name varchar(100) not null,
+    Email varchar(225) not null,
+    PhoneNo varchar(20) not null,
+    Message Text not null,
+    Created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    ` , (err, results) => {
+    if (err) {
+        console.error("Error executing query:", err);
+    } else {
+        console.log(results)
+        console.log("Table created or already exists");
+    }
+});
+
 
 
 app.use("/api/v1", Form_Submission);
