@@ -6,7 +6,7 @@ const pool = require("../Database");
 const GetUploadMiddleWare = require('../multer');
 const sendEmail = require("../Mail");
 const mergePDFs = require("../MergePDF");
-const editSinglePdf = require("../editSinglePdf");
+const editSinglePdf = require('../EditSinglepdf');
 const path = require("path");
 const CreateIndex = require("../createIndex");
 
