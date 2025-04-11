@@ -1,11 +1,12 @@
+const { config } = require("dotenv");
 const sql = require("mysql2")
-
+config();
 
 const pool = sql.createPool({
-    host: 'localhost',   // Change this if using remote DB
-    user: 'root',        // Your MySQL username
-    password: 'K@rtik@123', // Your MySQL password
-    database: 'journal_Database',
+    host: process.env.host,   // Change this if using remote DB
+    user: process.env.user,        // Your MySQL username
+    password:process.env.Pass, // Your MySQL password
+    database: process.env.DB, // Your MySQL database name
     port: 3306,
     waitForConnections: true,
     connectionLimit: 10,

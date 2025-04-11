@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const Form_Submission = require("./Routes/Form_Submission");
 const pool = require("./Database");
+const { config } = require("dotenv");
+config();
 
 const app = express();
 app.use(express.json());
@@ -9,6 +11,7 @@ app.use(cors({
     origin: "*"
 }));
 
+const PORT = process.env.PORT || 8000;
 
 pool.query(`
    CREATE TABLE IF NOT EXISTS Journal (
@@ -118,7 +121,7 @@ pool.query(`
 
 app.use("/api/v1", Form_Submission);
 
-app.listen(8000, () => {
+app.listen(PORT, () => {
     console.log("Server is running on port 8000");
 });
 
