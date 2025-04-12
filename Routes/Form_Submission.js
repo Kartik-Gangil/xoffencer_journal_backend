@@ -467,7 +467,8 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
         const Issue = issue.includes(" ") ? issue.split(" ")[1] : issue;
         const query = `SELECT Title_of_paper,Author_Name , Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND volume = ? AND issue = ?`;
         const title = `Magazine_of_Volume_${Volume}_Issue_${Issue}`;
-        const filePath = `./uploads/Magazine/${title}.pdf`;
+        const filePath = path.resolve(process.cwd(), 'uploads', 'Magazine', `${title}.pdf`);
+
 
         // Check if the file already exists asynchronously
         let fileExists = false;
@@ -505,10 +506,7 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
             .filter(item => item.Paper)
             .map(item => ({
                 // Convert to clean, safe, absolute paths
-                file: item.Paper.map(p => {
-                    const cleanedPath = p.replace(/\\/g, '/');
-                    return path.resolve(process.cwd(), cleanedPath);
-                }),
+                file: path.resolve(process.cwd(), item.Paper.replace(/\\/g, '/')),
                 date: item.Created_at,
             })); // Ensure valid paths
 
