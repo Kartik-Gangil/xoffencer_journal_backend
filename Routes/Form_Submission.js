@@ -40,6 +40,17 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
         const { journal, author, name, subject, branch, education, abstract, address, contact, email, paper, secondauthor } = req.body;
         const { volume, issue } = send()
         // console.log({ volume, issue })
+        try {
+            await sendEmail(email, author); // assuming sendEmail is async
+        } catch (emailError) {
+            console.error("Email sending failed:", emailError);
+            await deleteFiles([paperPath, photoPath, certificatePath]);
+            return res.status(500).json({
+                message: "Failed to send email notification",
+                status: false,
+                error: emailError.message
+            });
+        }
         // Insert data into database
         const query = `INSERT INTO Journal (
             Journal_Type, Title_of_paper, Author_Name, Fathers_Husbands_name,
@@ -52,7 +63,6 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
                 journal, paper, author, name, subject, branch, education, secondauthor,
                 abstract, address, contact, email, paperPath, photoPath, certificatePath, volume, issue
             ]);
-            sendEmail(email, author)
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
                 status: true,
