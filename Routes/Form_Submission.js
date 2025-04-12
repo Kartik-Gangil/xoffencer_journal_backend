@@ -415,12 +415,12 @@ router.post('/download/:id', async (req, res) => {
             const cleanedFilePath = filePathFromDB.replace(/\\/g, '/'); // Replace all backslashes with forward slashes
 
             // 2️⃣ Resolve the absolute original file path
-            const originalPath = path.resolve(__dirname, cleanedFilePath);
+            const originalPath = path.resolve(process.cwd(), cleanedFilePath);
             console.log("Resolved File Path:", originalPath);
 
             // 3️⃣ Prepare the output path safely
             const safeFilename = 'edited_' + path.basename(cleanedFilePath);
-            const tempDir = path.resolve(__dirname, 'uploads', 'temp');
+            const tempDir = path.resolve(process.cwd(), 'uploads', 'temp');
             const outputPath = path.resolve(tempDir, safeFilename);
 
             // 4️⃣ Ensure temp directory exists
@@ -507,7 +507,7 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
                 // Convert to clean, safe, absolute paths
                 file: item.Paper.map(p => {
                     const cleanedPath = p.replace(/\\/g, '/');
-                    return path.resolve(__dirname, cleanedPath);
+                    return path.resolve(process.cwd(), cleanedPath);
                 }),
                 date: item.Created_at,
             })); // Ensure valid paths
