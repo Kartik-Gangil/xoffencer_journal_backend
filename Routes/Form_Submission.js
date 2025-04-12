@@ -419,7 +419,7 @@ router.post('/download/:id', async (req, res) => {
             console.log("Resolved File Path:", originalPath);
 
             // 3️⃣ Prepare the output path safely
-            const safeFilename = 'edited_' + path.basename(filePathFromDB);
+            const safeFilename = 'edited_' + path.basename(cleanedFilePath);
             const tempDir = path.resolve(__dirname, 'uploads', 'temp');
             const outputPath = path.resolve(tempDir, safeFilename);
 
