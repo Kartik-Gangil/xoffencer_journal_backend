@@ -410,32 +410,46 @@ router.post('/download/:id', async (req, res) => {
                 return res.status(404).json({ message: "File not found" });
             }
 
-            const filePath = results[0].Paper; // Assuming this contains the full file path
-            console.log("File Path:", filePath);
+            // 1️⃣ Clean up the file path from DB
+            let filePathFromDB = results[0].Paper;
+            const cleanedFilePath = filePathFromDB.replace(/\\/g, '/'); // Replace all backslashes with forward slashes
 
-            let originalPath = path.resolve(filePath);;
-            let safeFilename = 'edited_' + path.basename(filePath); // replace unsafe chars
-            const outputPath = path.resolve(__dirname, 'uploads', 'temp', safeFilename);
+            // 2️⃣ Resolve the absolute original file path
+            const originalPath = path.resolve(__dirname, cleanedFilePath);
+            console.log("Resolved File Path:", originalPath);
 
-            // console.log("Input Path:", originalPath);
-            // console.log("Output Path:", outputPath);
+            // 3️⃣ Prepare the output path safely
+            const safeFilename = 'edited_' + path.basename(filePathFromDB);
+            const tempDir = path.resolve(__dirname, 'uploads', 'temp');
+            const outputPath = path.resolve(tempDir, safeFilename);
 
-            if (!fs.existsSync('./uploads/temp')) fs.mkdirSync('./uploads/temp');
+            // 4️⃣ Ensure temp directory exists
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+            }
 
-            await editSinglePdf(originalPath, outputPath, { publish: results[0].Created_at, vol: results[0].Volume, issue: results[0].Issue })
+            // 5️⃣ Edit the PDF with your utility
+            await editSinglePdf(
+                originalPath,
+                outputPath,
+                {
+                    publish: results[0].Created_at,
+                    vol: results[0].Volume,
+                    issue: results[0].Issue
+                }
+            );
 
-            // Set correct headers for PDF download
+            // 6️⃣ Set headers for download
             res.setHeader("Content-Type", "application/pdf");
-            res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}.pdf"`);
+            res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}"`);
 
-            // Send the file
+            // 7️⃣ Send the file
             res.download(outputPath, (err) => {
                 if (err) {
                     console.error("File download error:", err);
                     res.status(500).send('Error downloading file');
-                }
-                else {
-                    // Delete file after download
+                } else {
+                    // Clean up the temporary file after sending
                     fs.unlinkSync(outputPath);
                 }
             });
@@ -445,7 +459,6 @@ router.post('/download/:id', async (req, res) => {
         res.status(500).json({ message: 'Server Error', error: err.message });
     }
 });
-
 
 router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
     try {
