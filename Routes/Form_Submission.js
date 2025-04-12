@@ -415,7 +415,7 @@ router.post('/download/:id', async (req, res) => {
 
             let originalPath = path.resolve(filePath);;
             let safeFilename = 'edited_' + path.basename(filePath); // replace unsafe chars
-            const outputPath = path.resolve('./uploads/temp', safeFilename); // save to /temp folder
+            const outputPath = path.resolve(__dirname, 'uploads', 'temp', safeFilename);
 
             // console.log("Input Path:", originalPath);
             // console.log("Output Path:", outputPath);
@@ -491,16 +491,20 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
         const pdfData = results
             .filter(item => item.Paper)
             .map(item => ({
-                file: item.Paper,
+                // Convert to clean, safe, absolute paths
+                file: item.Paper.map(p => {
+                    const cleanedPath = p.replace(/\\/g, '/');
+                    return path.resolve(__dirname, cleanedPath);
+                }),
                 date: item.Created_at,
             })); // Ensure valid paths
-        
+
         const pdf = results
             .map(item => ({
                 title: item.Title_of_paper,
                 author: item.Author_Name,
-            })); 
-        
+            }));
+
 
         if (pdfData.length === 0) {
             return res.status(404).json({ message: "No valid PDF files found to merge" });
