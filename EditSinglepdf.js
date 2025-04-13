@@ -43,7 +43,7 @@ async function editSinglePdf(inputPath, outputPath, { vol, issue, publish }) {
 
             // Page number
             page.drawText(`${index + 1}`, {
-                x: (width / 1.65) - 20,
+                x: (width / 1.65) - 15,
                 y: 52,
                 size: 10,
                 color: rgb(0, 0, 0),
