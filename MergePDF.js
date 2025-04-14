@@ -20,7 +20,7 @@ function date(dt) {
 }
 
 
-async function mergePdfs(outputPath, staticPdfPath , pdfData, vol, issue) {
+async function mergePdfs(outputPath, staticPdfPath, pdfData, vol, issue) {
     let MonthAndYear = null;
     try {
         const mergedPdf = await PDFDocument.create();
@@ -95,13 +95,14 @@ async function mergePdfs(outputPath, staticPdfPath , pdfData, vol, issue) {
                 color: rgb(0, 0, 0),
             });
 
-
-            page.drawText(index === 0 ? '' : String(index), {
-                x:(width / 1.65)-15,
-                y: 52,
-                size: 10,
-                color: rgb(0, 0, 0),
-            });
+            if (index !== 0) {
+                page.drawText(`${index}`, {
+                    x: (width / 1.65) - 15,
+                    y: 52,
+                    size: 10,
+                    color: rgb(0, 0, 0),
+                });
+            }
         });
 
         // ✅ Save the merged PDF
@@ -116,4 +117,4 @@ async function mergePdfs(outputPath, staticPdfPath , pdfData, vol, issue) {
 
 
 
-module.exports =  mergePdfs;
+module.exports = mergePdfs;
