@@ -95,7 +95,7 @@ async function mergePdfs(outputPath, staticPdfPath, pdfData, vol, issue) {
                 color: rgb(0, 0, 0),
             });
 
-            if (index !== 0) {
+            if (index > 0) {
                 page.drawText(`${index}`, {
                     x: (width / 1.65) - 15,
                     y: 52,
