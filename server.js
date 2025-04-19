@@ -3,6 +3,9 @@ const cors = require("cors");
 const Form_Submission = require("./Routes/Form_Submission");
 const pool = require("./Database");
 const { config } = require("dotenv");
+const https = require('https');
+const http = require('http');
+const fs = require('fs');
 config();
 
 const app = express();
@@ -10,6 +13,12 @@ app.use(express.json());
 app.use(cors({
     origin: "*"
 }));
+
+const sslOptions = {
+    key: fs.readFileSync('/etc/letsencrypt/live/varsharesearchorganization.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/varsharesearchorganization.com/fullchain.pem')
+};
+
 
 const PORT = process.env.PORT || 8000;
 
@@ -121,9 +130,13 @@ pool.query(`
 
 app.use("/api/v1", Form_Submission);
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+https.createServer(sslOptions, app).listen(PORT, () => {
+    console.log('✅ HTTPS Server running on https://varsharesearchorganization.com');
 });
 
-
-
+http.createServer((req, res) => {
+    res.writeHead(301, { "Location": "https://" + req.headers.host + req.url });
+    res.end();
+}).listen(80, () => {
+    console.log('🌐 Redirecting HTTP traffic to HTTPS');
+});
