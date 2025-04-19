@@ -24,7 +24,7 @@ async function mergePdfs(outputPath, staticPdfPath, pdfData, vol, issue) {
     let MonthAndYear = null;
     try {
         const mergedPdf = await PDFDocument.create();
-
+        let staticPageCount = 0;
         // ✅ Ensure the directory for merged PDFs exists
         const outputDir = path.dirname(outputPath);
         fs.mkdirSync(outputDir, { recursive: true });
@@ -34,6 +34,7 @@ async function mergePdfs(outputPath, staticPdfPath, pdfData, vol, issue) {
             const staticPdfDoc = await PDFDocument.load(staticPdfBytes);
             const staticPages = await mergedPdf.copyPages(staticPdfDoc, staticPdfDoc.getPageIndices());
             staticPages.forEach(page => mergedPdf.addPage(page));
+            staticPageCount = staticPages.length;
             console.log(`✅ Added static PDF: ${staticPdfPath}`);
         }
         for (const { file, date } of pdfData) {
@@ -95,8 +96,9 @@ async function mergePdfs(outputPath, staticPdfPath, pdfData, vol, issue) {
                 color: rgb(0, 0, 0),
             });
 
-            if (index > 0) {
-                page.drawText(`${index}`, {
+            if (index > staticPageCount + 1) {
+                const pageNumber = index - staticPageCount - 1;
+                page.drawText(`${pageNumber}`, {
                     x: (width / 1.65) - 15,
                     y: 52,
                     size: 10,
