@@ -125,6 +125,6 @@ pool.query(`
 
 app.use("/api/v1", Form_Submission);
 
-app.listen(PORT , localhost, () => {
+app.listen(PORT , 'localhost', () => {
     console.log(`Server is running on port ${PORT}`);
 });
