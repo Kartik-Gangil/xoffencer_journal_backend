@@ -27,7 +27,7 @@ async function editSinglePdf(inputPath, outputPath, { vol, issue, publish }) {
                 color: rgb(0, 0, 0),
             });
 
-            page.drawText(`${monthName} ${year}, ISSN: XXXX – XXXX`, {
+            page.drawText(`${monthName} ${year}, `, {
                 x: 93.5,
                 y: height - 68,
                 size: 8,
