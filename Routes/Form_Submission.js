@@ -496,7 +496,12 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
                 if (err) {
                     console.error("File download error:", err);
                     return res.status(500).send('Error downloading file');
+                } else {
+                    // Delete file after download
+                    fs.unlinkSync(filePath);
+                    fs.unlinkSync(StaticPdf);
                 }
+
             });
         }
 

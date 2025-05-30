@@ -82,12 +82,12 @@ async function mergePdfs(outputPath, staticPdfPath, pdfData, vol, issue) {
                 color: rgb(0, 0, 0),
             });
             // January 2025, ISSN: XXXX – XXXX
-            // page.drawText(`${monthName} ${year}`, {
-            //     x: 93.5,
-            //     y: height - 68,
-            //     size: 8,
-            //     color: rgb(0, 0, 0),
-            // });
+            page.drawText(`${monthName} ${year}`, {
+                x: 93.5,
+                y: height - 68,
+                size: 8,
+                color: rgb(0, 0, 0),
+            });
             // Impact Factor: 0.75 – 0.25
             page.drawText(`Impact Factor: 0.75 – 2.75`, {
                 x: 93.5,
