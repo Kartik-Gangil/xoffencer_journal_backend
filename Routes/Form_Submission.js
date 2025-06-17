@@ -315,15 +315,45 @@ router.post('/contact', async (req, res) => {
 
 // getting volume
 
-router.get('/:type/:year', (req, res) => {
+// router.get('/:type/:year', (req, res) => {
+
+//     const { type, year } = req.params; // Get the type from the URL parameter
+//     // Define the SQL query based on the type
+//     let query = '';
+//     if (type === 'National Journal') {
+//         query = `SELECT Volume FROM Journal where Journal_Type = "National Journal" AND YEAR(Created_at) = ? `;
+//     } else if (type === 'International Journal') {
+//         query = `SELECT Volume FROM Journal where Journal_Type = "International Journal" AND YEAR(Created_at) = ? `;
+//     }
+//     else {
+//         return res.status(400).json({ message: "Invalid type" });
+//     }
+
+//     // Execute the query
+//     pool.query(query, [year], (error, results) => {
+//         if (error) {
+//             console.error("Database error:", error);
+//             return res.status(500).json({ message: "Database error", error: error.message });
+//         }
+//         const uniqueVolumes = [...new Set(results.map(item => item.Volume))];
+//         const sortVolume = uniqueVolumes.sort((a, b) => a - b); // Sort the years in ascending order
+//         const updatedVolume = sortVolume.map(num => `Volume ${num}`);
+//         res.status(200).json(updatedVolume); // Send the results as JSON response
+//     });
+// })
+
+// getting issue
+router.get('/:type/:year/', (req, res) => {
 
     const { type, year } = req.params; // Get the type from the URL parameter
+    // const number = vol.split(" ")[1]; // Gets the second part after splitting by space
+    // console.log(Number(number))
     // Define the SQL query based on the type
     let query = '';
     if (type === 'National Journal') {
-        query = `SELECT Volume FROM Journal where Journal_Type = "National Journal" AND YEAR(Created_at) = ? `;
+        query = `SELECT Issue FROM Journal where Journal_Type = "National Journal" AND YEAR(Created_at) = ? `;
     } else if (type === 'International Journal') {
-        query = `SELECT Volume FROM Journal where Journal_Type = "International Journal" AND YEAR(Created_at) = ? `;
+        query = `SELECT Issue FROM Journal where Journal_Type = "International Journal" AND YEAR(Created_at) = ?`;
     }
     else {
         return res.status(400).json({ message: "Invalid type" });
@@ -331,36 +361,6 @@ router.get('/:type/:year', (req, res) => {
 
     // Execute the query
     pool.query(query, [year], (error, results) => {
-        if (error) {
-            console.error("Database error:", error);
-            return res.status(500).json({ message: "Database error", error: error.message });
-        }
-        const uniqueVolumes = [...new Set(results.map(item => item.Volume))];
-        const sortVolume = uniqueVolumes.sort((a, b) => a - b); // Sort the years in ascending order
-        const updatedVolume = sortVolume.map(num => `Volume ${num}`);
-        res.status(200).json(updatedVolume); // Send the results as JSON response
-    });
-})
-
-// getting issue
-router.get('/:type/:year/:vol', (req, res) => {
-
-    const { type, year, vol } = req.params; // Get the type from the URL parameter
-    const number = vol.split(" ")[1]; // Gets the second part after splitting by space
-    // console.log(Number(number))
-    // Define the SQL query based on the type
-    let query = '';
-    if (type === 'National Journal') {
-        query = `SELECT Issue FROM Journal where Journal_Type = "National Journal" AND YEAR(Created_at) = ? And Volume = ? `;
-    } else if (type === 'International Journal') {
-        query = `SELECT Issue FROM Journal where Journal_Type = "International Journal" AND YEAR(Created_at) = ? And Volume = ?  `;
-    }
-    else {
-        return res.status(400).json({ message: "Invalid type" });
-    }
-
-    // Execute the query
-    pool.query(query, [year, number], (error, results) => {
         if (error) {
             console.error("Database error:", error);
             return res.status(500).json({ message: "Database error", error: error.message });
@@ -374,24 +374,24 @@ router.get('/:type/:year/:vol', (req, res) => {
 
 // getting entries
 
-router.get('/:type/:year/:vol/:issue', (req, res) => {
+router.get('/:type/:year/:issue', (req, res) => {
 
-    const { type, year, vol, issue } = req.params; // Get the type from the URL parameter
-    const Volume = vol.split(" ")[1]; // Gets the second part after splitting by space
+    const { type, year, issue } = req.params; // Get the type from the URL parameter
+    // const Volume = vol.split(" ")[1]; // Gets the second part after splitting by space
     const Issue = issue.split(" ")[1]; // Gets the second part after splitting by space
     // Define the SQL query based on the type
     let query = '';
     if (type === 'National Journal') {
-        query = `SELECT * FROM Journal where Journal_Type = "National Journal" AND YEAR(Created_at) = ? And Volume = ? AND Issue = ?`;
+        query = `SELECT * FROM Journal where Journal_Type = "National Journal" AND YEAR(Created_at) = ? And Issue = ?`;
     } else if (type === 'International Journal') {
-        query = `SELECT * FROM Journal where Journal_Type = "International Journal" AND YEAR(Created_at) = ? And Volume = ? AND Issue = ? `;
+        query = `SELECT * FROM Journal where Journal_Type = "International Journal" AND YEAR(Created_at) = ? And Issue = ? `;
     }
     else {
         return res.status(400).json({ message: "Invalid type" });
     }
 
     // Execute the query
-    pool.query(query, [year, Volume, Issue], (error, results) => {
+    pool.query(query, [year, Issue], (error, results) => {
         if (error) {
             console.error("Database error:", error);
             return res.status(500).json({ message: "Database error", error: error.message });
@@ -475,7 +475,7 @@ router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
         const { year, vol, issue } = req.params;
         const Volume = vol.includes(" ") ? vol.split(" ")[1] : vol;
         const Issue = issue.includes(" ") ? issue.split(" ")[1] : issue;
-        const query = `SELECT Title_of_paper,Author_Name , Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND volume = ? AND issue = ?`;
+        const query = `SELECT Title_of_paper,Author_Name , Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND  AND issue = ?`;
         const title = `Magazine_of_Volume_${Volume}_Issue_${Issue}`;
         const filePath = path.resolve(process.cwd(), 'uploads', 'Magazine', `${title}.pdf`);
 
