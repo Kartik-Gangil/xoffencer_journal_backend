@@ -470,13 +470,13 @@ router.post('/download/:id', async (req, res) => {
     }
 });
 
-router.post("/downloadMagzine/:year/:vol/:issue", async (req, res) => {
+router.post("/downloadMagzine/:year/:issue", async (req, res) => {
     try {
-        const { year, vol, issue } = req.params;
-        const Volume = vol.includes(" ") ? vol.split(" ")[1] : vol;
+        const { year, issue } = req.params;
+        // const Volume = vol.includes(" ") ? vol.split(" ")[1] : vol;
         const Issue = issue.includes(" ") ? issue.split(" ")[1] : issue;
-        const query = `SELECT Title_of_paper,Author_Name , Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND  AND issue = ?`;
-        const title = `Magazine_of_Volume_${Volume}_Issue_${Issue}`;
+        const query = `SELECT Title_of_paper,Author_Name , Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND issue = ?`;
+        const title = `Magazine_of_year_${year}_Issue_${Issue}`;
         const filePath = path.resolve(process.cwd(), 'uploads', 'Magazine', `${title}.pdf`);
 
 
