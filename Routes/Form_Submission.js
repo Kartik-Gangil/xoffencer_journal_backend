@@ -507,7 +507,7 @@ router.post("/downloadMagzine/:year/:issue", async (req, res) => {
 
         // If file doesn't exist, fetch data from DB
         const results = await new Promise((resolve, reject) => {
-            pool.query(query, [year, Volume, Issue], (error, results) => {
+            pool.query(query, [year, Issue], (error, results) => {
                 if (error) reject(error);
                 else resolve(results);
             });
