@@ -537,7 +537,7 @@ router.post("/downloadMagzine/:year/:issue", async (req, res) => {
         }
         await CreateIndex('./uploads/index.pdf', './uploads/temp/updated_output.pdf', pdf)
         const StaticPdf = './uploads/temp/updated_output.pdf'
-        await mergePDFs(filePath, StaticPdf, pdfData, Volume, Issue);
+        await mergePDFs(filePath, StaticPdf, pdfData, Issue);
 
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename="${title}.pdf"`);
