@@ -20,7 +20,7 @@ function date(dt) {
 }
 
 
-async function mergePdfs(outputPath, staticPdfPath, pdfData, vol = 1, issue) {
+async function mergePdfs(outputPath, staticPdfPath, pdfData, issue, vol = 1) {
     let MonthAndYear = null;
     try {
         const mergedPdf = await PDFDocument.create();
