@@ -82,7 +82,7 @@ async function mergePdfs(outputPath, staticPdfPath, pdfData, issue, vol = 1) {
                 color: rgb(0, 0, 0),
             });
             // January 2025, ISSN: XXXX – XXXX
-            page.drawText(`${monthName} ${year}`, {
+            page.drawText(`${monthName} ${year},ISSN: 3107-5185`, {
                 x: 93.5,
                 y: height - 68,
                 size: 8,
