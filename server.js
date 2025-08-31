@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const Form_Submission = require("./Routes/Form_Submission");
+const User = require("./Routes/User");
 const pool = require("./Database");
 const { config } = require("dotenv");
 
@@ -121,9 +122,27 @@ pool.query(`
     }
 });
 
+pool.query(`
+   create table if not exists Users(
+    id int primary key auto_increment,
+    Name varchar(100) not null,
+    Email varchar(225) not null unique,
+    Password Text not null,
+    Created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    ` , (err, results) => {
+    if (err) {
+        console.error("Error executing query:", err);
+    } else {
+        console.log(results)
+        console.log("Table created or already exists");
+    }
+});
+
 
 
 app.use("/api/v1", Form_Submission);
+app.use("/api/v1", User);
 
 app.listen(PORT, '127.0.0.1', () => {
     console.log(`Server is running on port ${PORT}`);

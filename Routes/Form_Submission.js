@@ -402,6 +402,24 @@ router.get('/:type/:year/:issue', (req, res) => {
 })
 
 
+router.post('/:id', (req, res) => {
+
+    const { id } = req.params; 
+    const ID = parseInt(id)
+    query = `SELECT * FROM Journal where id = ?`;
+
+    // Execute the query
+    pool.query(query, [ID], (error, results) => {
+        if (error) {
+            console.error("Database error:", error);
+            return res.status(500).json({ message: "Database error", error: error.message });
+        }
+
+        res.status(200).json(results); // Send the results as JSON response
+    });
+})
+
+
 // download the file
 
 router.post('/download/:id', async (req, res) => {
@@ -410,6 +428,7 @@ router.post('/download/:id', async (req, res) => {
         console.log("Requested ID:", id);
 
         const query = `SELECT * FROM Journal WHERE id = ?`;
+
         pool.query(query, [id], async (error, results) => {
             if (error) {
                 console.error("Database error:", error);
@@ -422,6 +441,7 @@ router.post('/download/:id', async (req, res) => {
 
             // 1️⃣ Clean up the file path from DB
             let filePathFromDB = results[0].Paper;
+
             const cleanedFilePath = filePathFromDB.replace(/\\/g, '/'); // Replace all backslashes with forward slashes
 
             // 2️⃣ Resolve the absolute original file path
@@ -473,6 +493,7 @@ router.post('/download/:id', async (req, res) => {
 router.post("/downloadMagzine/:year/:issue", async (req, res) => {
     try {
         const { year, issue } = req.params;
+        console.log({ year, issue })
         // const Volume = vol.includes(" ") ? vol.split(" ")[1] : vol;
         const Issue = issue.includes(" ") ? issue.split(" ")[1] : issue;
         const query = `SELECT Title_of_paper,Author_Name , Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND issue = ?`;
@@ -557,6 +578,36 @@ router.post("/downloadMagzine/:year/:issue", async (req, res) => {
         res.status(500).json({ message: 'Server Error', error: err.message });
     }
 });
+
+
+// delete specific data "DANGER ZONE"
+
+router.delete('/:id', (req, res) => {
+    const { id } = req.params;
+    const ID = parseInt(id, 10);
+
+    if (isNaN(ID)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+    }
+
+    const query = `DELETE FROM Journal WHERE id = ?`;
+
+    pool.query(query, [ID], (error, results) => {
+        if (error) {
+            console.error("Database error:", error);
+            return res.status(500).json({ message: "Database error", error: error.message });
+        }
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: "No record found with this ID" });
+        }
+
+        res.status(200).json({ message: "Record deleted successfully" });
+    });
+});
+
+
+
 
 
 
