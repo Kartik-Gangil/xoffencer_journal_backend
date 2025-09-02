@@ -46,7 +46,7 @@ pool.query(`
     if (err) {
         console.error("Error executing query:", err);
     } else {
-        console.log(results)
+        // console.log(results)
         console.log("Table created or already exists");
     }
 });
@@ -74,7 +74,7 @@ pool.query(`
     if (err) {
         console.error("Error executing query:", err);
     } else {
-        console.log(results)
+        // console.log(results)
         console.log("Table created or already exists");
     }
 });
@@ -99,7 +99,7 @@ pool.query(`
     if (err) {
         console.error("Error executing query:", err);
     } else {
-        console.log(results)
+        // console.log(results)
         console.log("Table created or already exists");
     }
 });
@@ -117,7 +117,7 @@ pool.query(`
     if (err) {
         console.error("Error executing query:", err);
     } else {
-        console.log(results)
+        // console.log(results)
         console.log("Table created or already exists");
     }
 });
@@ -134,15 +134,15 @@ pool.query(`
     if (err) {
         console.error("Error executing query:", err);
     } else {
-        console.log(results)
+        // console.log(results)
         console.log("Table created or already exists");
     }
 });
 
 
 
-app.use("/api/v1", Form_Submission);
 app.use("/api/v1", User);
+app.use("/api/v1", Form_Submission);
 
 app.listen(PORT, '127.0.0.1', () => {
     console.log(`Server is running on port ${PORT}`);

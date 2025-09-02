@@ -9,6 +9,7 @@ const jwt_secret = "varsharesearchorganization"
 
 router.post("/signup", async (req, res) => {
     const { name, email, password } = req.body;
+    console.log({name, email, password})
     try {
         const query = `Insert INTO Users (Name , Email ,Password) values (? , ? , ?)`;
         const salt = await bcrypt.genSalt(10);
