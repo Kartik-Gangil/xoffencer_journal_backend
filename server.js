@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const Form_Submission = require("./Routes/Form_Submission");
+const SeminarConference = require("./Routes/SeminarConfrence");
 const User = require("./Routes/User");
 const pool = require("./Database");
 const { config } = require("dotenv");
@@ -140,8 +141,43 @@ pool.query(`
 });
 
 
+// confrence application record table
+
+pool.query(`
+    create table if not exists Conference_Application(
+    id int primary key auto_increment,
+    Conference_Name varchar(300) not null,
+	date date,
+    mode enum('online' , 'offline') not null,
+    title varchar(100) not null,
+    Participant_Name varchar(100),
+    subject varchar(200),
+    co_author varchar(100) ,
+    email varchar(100),
+    mobile varchar(10),
+    address_proof_type enum('Aadhar','Driving License','Voter ID') not null,
+    adress_proof varchar(255),
+    TransactionID varchar(500) not null default("null"),
+    Paper VARCHAR(100) NOT NULL
+    );
+    ` , (err, results) => {
+    if (err) {
+        console.error("Error executing query:", err);
+    } else {
+        // console.log(results)
+        console.log("Table created or already exists");
+    }
+});
+
+
+
+
+
+
+
 
 app.use("/api/v1", User);
+app.use("/api/v1", SeminarConference);
 app.use("/api/v1", Form_Submission);
 
 app.listen(PORT, '127.0.0.1', () => {

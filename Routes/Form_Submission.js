@@ -259,31 +259,36 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
 // fetching data
 // getting year
 router.get('/:type', (req, res) => {
-
     const type = req.params.type; // Get the type from the URL parameter
 
-    // Define the SQL query based on the type
-    let query = '';
-    if (type === 'National Journal') {
-        query = 'SELECT Created_at FROM Journal where Journal_Type = "National Journal" ';
-    } else if (type === 'International Journal') {
-        query = 'SELECT Created_at FROM Journal where Journal_Type = "International Journal" ';
-    }
-    else {
+    // Validate type
+    if (type !== 'National Journal' && type !== 'International Journal') {
         return res.status(400).json({ message: "Invalid type" });
     }
 
-    // Execute the query
-    pool.query(query, (error, results) => {
+    // Use database to get unique years directly
+    const query = `
+        SELECT DISTINCT Year
+        FROM Journal
+        WHERE Journal_Type = ?
+        ORDER BY Year ASC
+    `;
+
+    pool.query(query, [type], (error, results) => {
         if (error) {
             console.error("Database error:", error);
-            return res.status(500).json({ message: "Database error", status: false, error: error.message });
+            return res.status(500).json({
+                message: "Database error",
+                status: false,
+                error: error.message
+            });
         }
-        const uniqueYears = [...new Set(results.map(item => new Date(item.Created_at).getFullYear()))];
-        const sortYear = uniqueYears.sort((a, b) => a - b); // Sort the years in ascending order
-        res.status(200).json(sortYear); // Send the results as JSON response
+
+        // results already contains unique, sorted years
+        const years = results.map(row => row.Year);
+        res.status(200).json(years);
     });
-})
+});
 
 
 // contact from api
@@ -321,9 +326,9 @@ router.post('/contact', async (req, res) => {
 //     // Define the SQL query based on the type
 //     let query = '';
 //     if (type === 'National Journal') {
-//         query = `SELECT Volume FROM Journal where Journal_Type = "National Journal" AND YEAR(Created_at) = ? `;
+//         query = `SELECT Volume FROM Journal where Journal_Type = "National Journal" AND Year = ? `;
 //     } else if (type === 'International Journal') {
-//         query = `SELECT Volume FROM Journal where Journal_Type = "International Journal" AND YEAR(Created_at) = ? `;
+//         query = `SELECT Volume FROM Journal where Journal_Type = "International Journal" AND Year = ? `;
 //     }
 //     else {
 //         return res.status(400).json({ message: "Invalid type" });
@@ -351,9 +356,9 @@ router.get('/:type/:year/', (req, res) => {
     // Define the SQL query based on the type
     let query = '';
     if (type === 'National Journal') {
-        query = `SELECT Issue FROM Journal where Journal_Type = "National Journal" AND YEAR(Created_at) = ? `;
+        query = `SELECT Issue FROM Journal where Journal_Type = "National Journal" AND Year = ? `;
     } else if (type === 'International Journal') {
-        query = `SELECT Issue FROM Journal where Journal_Type = "International Journal" AND YEAR(Created_at) = ?`;
+        query = `SELECT Issue FROM Journal where Journal_Type = "International Journal" AND Year = ?`;
     }
     else {
         return res.status(400).json({ message: "Invalid type" });
@@ -382,9 +387,9 @@ router.get('/:type/:year/:issue', (req, res) => {
     // Define the SQL query based on the type
     let query = '';
     if (type === 'National Journal') {
-        query = `SELECT * FROM Journal where Journal_Type = "National Journal" AND YEAR(Created_at) = ? And Issue = ?`;
+        query = `SELECT * FROM Journal where Journal_Type = "National Journal" AND Year = ? And Issue = ?`;
     } else if (type === 'International Journal') {
-        query = `SELECT * FROM Journal where Journal_Type = "International Journal" AND YEAR(Created_at) = ? And Issue = ? `;
+        query = `SELECT * FROM Journal where Journal_Type = "International Journal" AND Year = ? And Issue = ? `;
     }
     else {
         return res.status(400).json({ message: "Invalid type" });
@@ -496,7 +501,7 @@ router.post("/downloadMagzine/:year/:issue", async (req, res) => {
         console.log({ year, issue })
         // const Volume = vol.includes(" ") ? vol.split(" ")[1] : vol;
         const Issue = issue.includes(" ") ? issue.split(" ")[1] : issue;
-        const query = `SELECT Title_of_paper,Author_Name , Paper , Created_at FROM Journal WHERE YEAR(created_at) = ? AND issue = ?`;
+        const query = `SELECT Title_of_paper,Author_Name , Paper , Created_at FROM Journal WHERE Year = ? AND issue = ?`;
         const title = `Magazine_of_year_${year}_Issue_${Issue}`;
         const filePath = path.resolve(process.cwd(), 'uploads', 'Magazine', `${title}.pdf`);
 

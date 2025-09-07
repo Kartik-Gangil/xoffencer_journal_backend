@@ -3,6 +3,7 @@ const { PDFDocument, rgb } = require('pdf-lib');
 
 async function editSinglePdf(inputPath, outputPath, { vol, issue, publish }) {
     try {
+        // const imageBytes = fs.readFileSync('');
         const existingPdfBytes = fs.readFileSync(inputPath);
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
