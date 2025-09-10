@@ -22,7 +22,9 @@ function date(dt) {
 
 async function mergePdfs(outputPath, staticPdfPath, pdfData, issue, vol = 1) {
     let MonthAndYear = null;
+    const imageBytes = fs.readFileSync('./public/LOGO 3.png');
     try {
+
         const mergedPdf = await PDFDocument.create();
         let staticPageCount = 0;
         // ✅ Ensure the directory for merged PDFs exists
@@ -63,6 +65,12 @@ async function mergePdfs(outputPath, staticPdfPath, pdfData, issue, vol = 1) {
         // ✅ Add page numbers
         const { monthName, year } = MonthAndYear ? date(MonthAndYear.toString()) : { monthName: "Unknown", year: "Unknown" };
         const pages = mergedPdf.getPages();
+
+        const image = await mergedPdf.embedPng(imageBytes);
+
+        const { width, height } = image.scale(1);
+        const newWidth = width / 5; // example: make it smaller
+        const newHeight = height / 5;
         pages.forEach((page, index) => {
             const { width, height } = page.getSize();
 
@@ -95,6 +103,13 @@ async function mergePdfs(outputPath, staticPdfPath, pdfData, issue, vol = 1) {
                 size: 8,
                 color: rgb(0, 0, 0),
             });
+            // adding logo to each page
+            page.drawImage(image, {
+                x: width - newWidth - 90, // 20 units padding from right
+                y: height - 84.5, // 20 units padding from top
+                width: newWidth,
+                height: newHeight
+            })
 
             if (index > staticPageCount + 1) {
                 const pageNumber = index - staticPageCount - 1;
