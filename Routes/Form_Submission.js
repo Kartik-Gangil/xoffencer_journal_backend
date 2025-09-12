@@ -262,7 +262,7 @@ router.get('/:type', (req, res) => {
     const type = req.params.type; // Get the type from the URL parameter
 
     // Validate type
-    if (type !== 'National Journal' && type !== 'International Journal') {
+    if (!['National Journal', 'International Journal'].includes(type)) {
         return res.status(400).json({ message: "Invalid type" });
     }
 
@@ -348,21 +348,20 @@ router.post('/contact', async (req, res) => {
 // })
 
 // getting issue
-router.get('/:type/:year/', (req, res) => {
+router.get('/:type/:year', (req, res) => {
 
     const { type, year } = req.params; // Get the type from the URL parameter
     // const number = vol.split(" ")[1]; // Gets the second part after splitting by space
     // console.log(Number(number))
     // Define the SQL query based on the type
-    let query = '';
-    if (type === 'National Journal') {
-        query = `SELECT Issue FROM Journal where Journal_Type = "National Journal" AND Year = ? `;
-    } else if (type === 'International Journal') {
-        query = `SELECT Issue FROM Journal where Journal_Type = "International Journal" AND Year = ?`;
-    }
-    else {
+
+    if (!['National Journal', 'International Journal'].includes(type)) {
         return res.status(400).json({ message: "Invalid type" });
     }
+    let query = ` SELECT DISTINCT Issue
+            FROM Journal
+            WHERE Journal_Type = "National Journal"  AND Year = ?
+            ORDER BY Issue ASC `;
 
     // Execute the query
     pool.query(query, [year], (error, results) => {
@@ -370,10 +369,11 @@ router.get('/:type/:year/', (req, res) => {
             console.error("Database error:", error);
             return res.status(500).json({ message: "Database error", error: error.message });
         }
-        const uniqueIssue = [...new Set(results.map(item => item.Issue))];
-        const sortIssue = uniqueIssue.sort((a, b) => a - b); // Sort the years in ascending order
-        const updatedIssue = sortIssue.map(num => `Issue ${num}`);
-        res.status(200).json(updatedIssue); // Send the results as JSON response
+        // const uniqueIssue = [...new Set(results.map(item => item.Issue))];
+        // const sortIssue = uniqueIssue.sort((a, b) => a - b); // Sort the years in ascending order
+        // const updatedIssue = sortIssue.map(num => `Issue ${num}`);
+        res.status(200).json(results.map(row => `Issue ${row.Issue}`)); // Send the results as JSON response
+        // res.status(200).json(results); // Send the results as JSON response
     });
 })
 
@@ -385,13 +385,10 @@ router.get('/:type/:year/:issue', (req, res) => {
     // const Volume = vol.split(" ")[1]; // Gets the second part after splitting by space
     const Issue = issue.split(" ")[1]; // Gets the second part after splitting by space
     // Define the SQL query based on the type
-    let query = '';
-    if (type === 'National Journal') {
-        query = `SELECT * FROM Journal where Journal_Type = "National Journal" AND Year = ? And Issue = ?`;
-    } else if (type === 'International Journal') {
-        query = `SELECT * FROM Journal where Journal_Type = "International Journal" AND Year = ? And Issue = ? `;
-    }
-    else {
+    let query = ` SELECT *
+            FROM Journal
+            WHERE Journal_Type = "National Journal" AND Year = ? AND Issue = ?`;
+    if (!['National Journal', 'International Journal'].includes(type)) {
         return res.status(400).json({ message: "Invalid type" });
     }
 
@@ -409,7 +406,7 @@ router.get('/:type/:year/:issue', (req, res) => {
 
 router.post('/:id', (req, res) => {
 
-    const { id } = req.params; 
+    const { id } = req.params;
     const ID = parseInt(id)
     query = `SELECT * FROM Journal where id = ?`;
 

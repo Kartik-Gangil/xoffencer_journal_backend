@@ -10,9 +10,9 @@ async function migrate() {
         console.log("🚀 Running migration...");
 
         // 1. Add Year column 
-        await promisePool.query(`
-            ALTER TABLE Journal ADD COLUMN Year INT GENERATED ALWAYS AS (YEAR(Created_at)) STORED;
-        `);
+        // await promisePool.query(`
+        //     ALTER TABLE Journal ADD COLUMN Year INT GENERATED ALWAYS AS (YEAR(Created_at)) STORED;
+        // `);
 
         // 2. Add indexes
         await promisePool.query(`
