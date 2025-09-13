@@ -43,10 +43,10 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
         try {
             await sendEmail(email, author); // assuming sendEmail is async
         } catch (emailError) {
-            console.error("Email sending failed:", emailError);
+            console.error("❌Email sending failed:", emailError);
             await deleteFiles([paperPath, photoPath, certificatePath]);
             return res.status(500).json({
-                message: "Failed to send email notification",
+                message: "❌Failed to send email notification",
                 status: false,
                 error: emailError.message
             });
