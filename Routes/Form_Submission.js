@@ -378,37 +378,59 @@ router.get('/:type/:year', (req, res) => {
 })
 
 // getting entries
+router.get('/:type/:year/:issue', async (req, res) => {
+    try {
+        const { type, year, issue } = req.params;
+        const Issue = issue.split(" ")[1]; // assuming Issue is like "Issue 5"
 
-router.get('/:type/:year/:issue', (req, res) => {
-
-    const { type, year, issue } = req.params; // Get the type from the URL parameter
-    // const Volume = vol.split(" ")[1]; // Gets the second part after splitting by space
-    const Issue = issue.split(" ")[1]; // Gets the second part after splitting by space
-    // Define the SQL query based on the type
-    let query = ` SELECT *
-            FROM Journal
-            WHERE Journal_Type = "National Journal" AND Year = ? AND Issue = ?`;
-    if (!['National Journal', 'International Journal'].includes(type)) {
-        return res.status(400).json({ message: "Invalid type" });
-    }
-
-    // Execute the query
-    pool.query(query, [year, Issue], (error, results) => {
-        if (error) {
-            console.error("Database error:", error);
-            return res.status(500).json({ message: "Database error", error: error.message });
+        // Validate type
+        if (!['National Journal', 'International Journal'].includes(type)) {
+            return res.status(400).json({ message: "Invalid type" });
         }
 
-        res.status(200).json(results); // Send the results as JSON response
-    });
-})
+        // Pagination
+        const page = parseInt(req.query.page);
+        const limit = 5;
+        const offset = (page - 1) * limit;
+
+        // Optimized query (uses composite index: Journal_Type, Year, Issue)
+        const query = `
+            SELECT SQL_CALC_FOUND_ROWS 
+                  id, Title_of_paper, Author_Name, subject, Created_at
+            FROM Journal
+            WHERE Journal_Type = ? AND Year = ? AND Issue = ?
+            ORDER BY id
+            LIMIT ? OFFSET ?;
+        `;
+
+        const [rows] = await pool.promise().query(query, [type, year, Issue, limit, offset]);
+
+        // Get total count (without LIMIT)
+        const [[{ total }]] = await pool.promise().query("SELECT FOUND_ROWS() as total;");
+
+        return res.status(200).json({
+            data: rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+
+    } catch (error) {
+        console.error("Database error:", error);
+        return res.status(500).json({ message: "Database error", error: error.message });
+    }
+});
+
 
 
 router.post('/:id', (req, res) => {
 
     const { id } = req.params;
     const ID = parseInt(id)
-    query = `SELECT * FROM Journal where id = ?`;
+    query = `SELECT Abstract , Author_Name,Branch,Created_at,Journal_Type,Second_Author_Guide_Name,Title_of_paper,id,subject,Volume,Issue FROM Journal where id = ?`;
 
     // Execute the query
     pool.query(query, [ID], (error, results) => {
