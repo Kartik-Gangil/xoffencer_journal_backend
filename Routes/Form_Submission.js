@@ -9,6 +9,7 @@ const mergePDFs = require("../MergePDF");
 const editSinglePdf = require('../EditSinglepdf');
 const path = require("path");
 const CreateIndex = require("../createIndex");
+const CreateCertificate = require("../Certificate");
 
 // File fields for multer
 const JournalFormFields = [
@@ -604,6 +605,66 @@ router.post("/downloadMagzine/:year/:issue", async (req, res) => {
 });
 
 
+
+// download the certificate
+router.post('/downloadCertificate/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log("Requested ID:", id);
+
+        const query = `SELECT Author_Name , Title_of_paper FROM Journal WHERE id = ?`;
+        pool.query(query, [id], async (error, result) => {
+            if (error) {
+                console.error("Database error:", error);
+                return res.status(500).json({ message: "Database error", error: error.message });
+            }
+
+            if (result.length === 0) {
+                return res.status(404).json({ message: "File not found" });
+            }
+
+            const name = result[0].Author_Name;
+            const Title = result[0].Title_of_paper;
+            console.log("Author:", name);
+
+            // Paths
+            const dirPath = path.join(__dirname, "..", "uploads", "JournalCertificate");
+            const outputPath = path.join(dirPath, `${id}.pdf`);
+
+            // Ensure directory exists
+            if (!fs.existsSync(dirPath)) {
+                fs.mkdirSync(dirPath, { recursive: true });
+            }
+
+            // Generate certificate if not already present
+            if (!fs.existsSync(outputPath)) {
+                await CreateCertificate(name, id, Title);
+            }
+
+            // Safe file name for download
+            const safeFileName = `${name.replace(/[^a-z0-9]/gi, "_")}_certificate.pdf`;
+
+            return res.download(outputPath, safeFileName, (err) => {
+                if (err) {
+                    console.error("File download error:", err);
+                    return res.status(500).send("Error downloading file");
+                }
+            });
+        });
+
+    } catch (error) {
+        console.error("Server error:", error);
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+});
+
+
+
+
+
+
+
+
 // delete specific data "DANGER ZONE"
 
 router.delete('/:id', (req, res) => {
@@ -613,6 +674,23 @@ router.delete('/:id', (req, res) => {
     if (isNaN(ID)) {
         return res.status(400).json({ message: "Invalid ID format" });
     }
+
+    const data = `select Paper , Photo , Certificate FROM Journal WHERE id = ?`;
+    pool.query(data, [ID], (error, results) => {
+        if (error) {
+            console.error("Database error:", error);
+            return res.status(500).json({ message: "Database error", error: error.message });
+        }
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: "No record found with this ID" });
+        }
+
+        const filePaths = results[0];
+        console.log(filePaths)
+        deleteFiles([filePaths.Paper, filePaths.Photo, filePaths.Certificate])
+
+    });
 
     const query = `DELETE FROM Journal WHERE id = ?`;
 
@@ -629,6 +707,7 @@ router.delete('/:id', (req, res) => {
         res.status(200).json({ message: "Record deleted successfully" });
     });
 });
+
 
 
 

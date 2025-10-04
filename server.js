@@ -160,7 +160,6 @@ if (cluster.isMaster) {
             else console.log("Conference_Application table ready");
         });
     }
-
     // Routes
     app.use("/api/v1", User);
     app.use("/api/v1", SeminarConference);
