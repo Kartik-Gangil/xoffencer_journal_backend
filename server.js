@@ -56,7 +56,7 @@ if (cluster.isMaster) {
                 Paper VARCHAR(100) NOT NULL,
                 Photo VARCHAR(100) NOT NULL,
                 Certificate VARCHAR(100) NOT NULL,
-                Created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                Created_at DATETIME ,
                 Volume int,
                 Issue int,
                 isPublished boolean DEFAULT false,

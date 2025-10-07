@@ -38,8 +38,8 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
         }
 
         // Extract fields from request
-        const { journal, author, name, subject, branch, education, abstract, address, contact, email, paper, secondauthor } = req.body;
-        const { volume, issue } = send()
+        const { journal, author, name, subject, branch, education, abstract, address, contact, email, paper, secondauthor, date } = req.body;
+        const { volume, issue } = send(date)
         // console.log({ volume, issue })
         try {
             await sendEmail(email, author); // assuming sendEmail is async
@@ -56,13 +56,13 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
         const query = `INSERT INTO Journal (
             Journal_Type, Title_of_paper, Author_Name, Fathers_Husbands_name,
             subject, Branch, Education, Second_Author_Guide_Name,
-            Abstract, Address, Contact, Email, Paper, Photo, Certificate , Volume , Issue
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ?)`;
+            Abstract, Address, Contact, Email, Paper, Photo, Certificate,Created_at , Volume , Issue
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ? , ?)`;
 
         try {
             const results = pool.query(query, [
                 journal, paper, author, name, subject, branch, education, secondauthor,
-                abstract, address, contact, email, paperPath, photoPath, certificatePath, volume, issue
+                abstract, address, contact, email, paperPath, photoPath, certificatePath, date, volume, issue
             ]);
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
