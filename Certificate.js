@@ -7,7 +7,7 @@ const fontBytes = fs.readFileSync('./fonts/Tangerine-Bold.ttf');
 
 async function CreateCertificate(name, id, Title) {
     try {
-        const certificatePDF = fs.readFileSync('./uploads/certificate_credentials/blank_certificate.pdf')
+        const certificatePDF = fs.readFileSync('./blank_certificate.pdf')
         const pdfDoc = await PDFDocument.load(certificatePDF);
         const pages = pdfDoc.getPages();
 
