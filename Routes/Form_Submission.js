@@ -10,7 +10,8 @@ const editSinglePdf = require('../EditSinglepdf');
 const path = require("path");
 const CreateIndex = require("../createIndex");
 const CreateCertificate = require("../Certificate");
-
+const createOrder = require('../Payment_Service')
+const crypto = require('crypto')
 // File fields for multer
 const JournalFormFields = [
     { name: "paperIcon", maxCount: 1 },
@@ -21,11 +22,31 @@ const JournalFormFields = [
 const uploadJournal = GetUploadMiddleWare('./uploads/Journal')
 
 // API Route
+router.post("/verify-payment", (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_SECRET)
+        .update(body.toString())
+        .digest("hex");
+
+    if (expectedSignature === razorpay_signature) {
+        res.json({ success: true, message: "Payment verified successfully" });
+    } else {
+        res.status(400).json({ success: false, message: "Invalid signature" });
+    }
+});
+
+
+
 console.log(new Date().getDate())
 router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), async (req, res) => {
 
 
     try {
+
         const paperPath = req.files["paperIcon"] ? req.files["paperIcon"][0].path : null;
         const photoPath = req.files["photo"] ? req.files["photo"][0].path : null;
         const certificatePath = req.files["marksheet"] ? req.files["marksheet"][0].path : null;
@@ -38,7 +59,9 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
         }
 
         // Extract fields from request
-        const { journal, author, name, subject, branch, education, abstract, address, contact, email, paper, secondauthor, date } = req.body;
+        const { journal, author, name, subject, branch, education, abstract, address, contact, email, paper, secondauthor, date, amount } = req.body;
+
+        const order = await createOrder(amount); //integrate the payment in this route
         const { volume, issue } = send(date)
         // console.log({ volume, issue })
         try {
@@ -69,6 +92,9 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
                 status: true,
                 submissionId: results.insertId,
                 files: { paper: paperPath, photo: photoPath, certificate: certificatePath },
+                orderId: order.id,
+                currency: order.currency,
+                amount: order.amount
             });
 
         } catch (dbError) {
@@ -210,8 +236,8 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
         }
 
         // Extract fields from request
-        const { name, fathername, subject, branch, education, link, paper, abstract, address, email, contact } = req.body;
-
+        const { name, fathername, subject, branch, education, link, paper, abstract, address, email, contact , amount } = req.body;
+        const order = await createOrder(amount); //integrate the payment in this route
         // Insert data into database
         const query = `INSERT INTO Journal_Certification (
            Name,Gurdian_name, subject, Branch, Education, link_of_publication , paper,Abstract,  Address,Email, Contact, Photo
@@ -225,7 +251,10 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
                 message: "Files uploaded and data saved successfully!",
                 status: true,
                 submissionId: results.insertId,
-                files: { photo: photoPath }
+                files: { photo: photoPath },
+                orderId: order.id,
+                currency: order.currency,
+                amount: order.amount
             });
 
         } catch (dbError) {
