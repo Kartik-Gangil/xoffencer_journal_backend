@@ -12,6 +12,8 @@ const CreateIndex = require("../createIndex");
 const CreateCertificate = require("../Certificate");
 const createOrder = require('../Payment_Service')
 const crypto = require('crypto')
+const Fixing = require("../Fixing");
+
 // File fields for multer
 const JournalFormFields = [
     { name: "paperIcon", maxCount: 1 },
@@ -42,8 +44,10 @@ router.post("/verify-payment", (req, res) => {
 
 
 console.log(new Date().getDate())
-router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), async (req, res) => {
 
+// ask for api of razor pay and integrate it here and make seperate route for admin to add journal entry or find a way to use same route for form submission and admin entry
+
+router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), async (req, res) => {
 
     try {
 
@@ -87,6 +91,7 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
                 journal, paper, author, name, subject, branch, education, secondauthor,
                 abstract, address, contact, email, paperPath, photoPath, certificatePath, date, volume, issue
             ]);
+            // if (results) await Fixing() // fix this for updating the start and end page number in the database of the entry just added
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
                 status: true,
@@ -95,6 +100,125 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
                 orderId: order.id,
                 currency: order.currency,
                 amount: order.amount
+            });
+
+        } catch (dbError) {
+            console.error("Database error:", dbError);
+
+            // Delete uploaded files if database operation fails
+            await deleteFiles([paperPath, photoPath, certificatePath]);
+
+            return res.status(500).json({
+                message: "Database error",
+                status: false,
+                error: dbError.message
+            });
+        }
+
+    } catch (error) {
+        console.error("Error in form submission:", error);
+
+        // Cleanup uploaded files if any error occurs
+        await deleteFiles([paperPath, photoPath, certificatePath]);
+
+        return res.status(500).json({
+            message: "Internal server error",
+            status: false,
+            error: process.env.NODE_ENV === "development" ? error.message : "An unexpected error occurred",
+        });
+    }
+});
+
+
+router.post("/form-for-publication-admin", uploadJournal.fields(JournalFormFields), async (req, res) => {
+
+    try {
+
+        const paperPath = req.files["paperIcon"] ? req.files["paperIcon"][0].path : null;
+        const photoPath = req.files["photo"] ? req.files["photo"][0].path : null;
+        const certificatePath = req.files["marksheet"] ? req.files["marksheet"][0].path : null;
+
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(req.body.email)) {
+            return res.status(400).json({ message: "Invalid email format" });
+        }
+
+        // Extract fields from request
+        const { journal, author, name, subject, branch, education, abstract, address, contact, email, paper, secondauthor, date } = req.body;
+
+        // const order = await createOrder(amount); //integrate the payment in this route
+        const { volume, issue } = send(date)
+        // console.log({ volume, issue })
+        try {
+            await sendEmail(email, author); // assuming sendEmail is async
+        } catch (emailError) {
+            console.error("❌Email sending failed:", emailError);
+            await deleteFiles([paperPath, photoPath, certificatePath]);
+            return res.status(500).json({
+                message: "❌Failed to send email notification",
+                status: false,
+                error: emailError.message
+            });
+        }
+        // Insert data into database
+        const query = `
+            INSERT INTO Journal (
+                Journal_Type,
+                Title_of_paper,
+                Author_Name,
+                Fathers_Husbands_name,
+                subject,
+                Branch,
+                Education,
+                Second_Author_Guide_Name,
+                \`Abstract\`,
+                Address,
+                Contact,
+                Email,
+                Paper,
+                Photo,
+                Certificate,
+                Created_at,
+                Volume,
+                Issue,
+                isPublished,
+                Publication_date 
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+
+        try {
+            const results = pool.query(query, [
+                journal,          // Journal_Type
+                paper,            // Title_of_paper
+                author,           // Author_Name
+                name,             // Fathers_Husbands_name
+                subject,
+                branch,
+                education,
+                secondauthor,
+                abstract,
+                address,
+                contact,
+                email,
+                paperPath,
+                photoPath,
+                certificatePath,
+                date,
+                volume,
+                issue,
+                true,         // boolean instead of "true"
+                date          // Publication_date same as Created_at
+            ]);
+
+            // if (results) await Fixing() // fix this for updating the start and end page number in the database of the entry just added
+            return res.status(201).json({
+                message: "Files uploaded and data saved successfully!",
+                status: true,
+                submissionId: results.insertId,
+                files: { paper: paperPath, photo: photoPath, certificate: certificatePath },
             });
 
         } catch (dbError) {
@@ -236,7 +360,7 @@ router.post("/form-for-JournalCertification", uploadJournalCertification.fields(
         }
 
         // Extract fields from request
-        const { name, fathername, subject, branch, education, link, paper, abstract, address, email, contact , amount } = req.body;
+        const { name, fathername, subject, branch, education, link, paper, abstract, address, email, contact, amount } = req.body;
         const order = await createOrder(amount); //integrate the payment in this route
         // Insert data into database
         const query = `INSERT INTO Journal_Certification (
@@ -300,7 +424,7 @@ router.get('/:type', (req, res) => {
     const query = `
         SELECT DISTINCT Year
         FROM Journal
-        WHERE Journal_Type = ?
+        WHERE Journal_Type = ? AND isPublished = true
         ORDER BY Year ASC
     `;
 
@@ -390,7 +514,7 @@ router.get('/:type/:year', (req, res) => {
     }
     let query = ` SELECT DISTINCT Issue
             FROM Journal
-            WHERE Journal_Type = "National Journal"  AND Year = ?
+            WHERE Journal_Type = "National Journal"  AND Year = ? And isPublished = true
             ORDER BY Issue ASC `;
 
     // Execute the query
@@ -428,7 +552,7 @@ router.get('/:type/:year/:issue', async (req, res) => {
             SELECT SQL_CALC_FOUND_ROWS 
                   id, Title_of_paper, Author_Name, subject, Created_at
             FROM Journal
-            WHERE Journal_Type = ? AND Year = ? AND Issue = ?
+            WHERE Journal_Type = ? AND Year = ? AND Issue = ? And isPublished = true
             ORDER BY id
             LIMIT ? OFFSET ?;
         `;
@@ -516,6 +640,8 @@ router.post('/download/:id', async (req, res) => {
             await editSinglePdf(
                 originalPath,
                 outputPath,
+                start_page = results[0].start_page,
+                end_page = results[0].end_page,
                 {
                     publish: results[0].Created_at,
                     vol: results[0].Volume,

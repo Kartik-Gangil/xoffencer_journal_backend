@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { PDFDocument, rgb } = require('pdf-lib');
 
-async function editSinglePdf(inputPath, outputPath, { vol, issue, publish }) {
+async function editSinglePdf(inputPath, outputPath, start_page , end_page,{ vol, issue, publish }) {
     try {
         const imageBytes = fs.readFileSync('./public/LOGO 3.png');
         const existingPdfBytes = fs.readFileSync(inputPath);
@@ -58,12 +58,13 @@ async function editSinglePdf(inputPath, outputPath, { vol, issue, publish }) {
             })
 
             // Page number
-            page.drawText(`${index + 1}`, {
+            page.drawText(`${start_page}`, {
                 x: (width / 1.65) - 15,
                 y: 52,
                 size: 10,
                 color: rgb(0, 0, 0),
             });
+            start_page++;
         });
 
         const editedPdfBytes = await pdfDoc.save();
