@@ -12,7 +12,8 @@ const CreateIndex = require("../createIndex");
 const CreateCertificate = require("../Certificate");
 const createOrder = require('../Payment_Service')
 const crypto = require('crypto')
-const Fixing = require("../Fixing");
+// const Fixing = require("../Fixing");
+// const Zenodo = require("./zenodo");
 
 // File fields for multer
 const JournalFormFields = [
@@ -151,17 +152,7 @@ router.post("/form-for-publication-admin", uploadJournal.fields(JournalFormField
         // const order = await createOrder(amount); //integrate the payment in this route
         const { volume, issue } = send(date)
         // console.log({ volume, issue })
-        try {
-            await sendEmail(email, author); // assuming sendEmail is async
-        } catch (emailError) {
-            console.error("❌Email sending failed:", emailError);
-            await deleteFiles([paperPath, photoPath, certificatePath]);
-            return res.status(500).json({
-                message: "❌Failed to send email notification",
-                status: false,
-                error: emailError.message
-            });
-        }
+
         // Insert data into database
         const query = `
             INSERT INTO Journal (
@@ -212,8 +203,19 @@ router.post("/form-for-publication-admin", uploadJournal.fields(JournalFormField
                 true,         // boolean instead of "true"
                 date          // Publication_date same as Created_at
             ]);
-
+            // await Zenodo(paperPath, "https://zenodo.org/api/files/your_bucket_id", path.basename(paperPath))
             // if (results) await Fixing() // fix this for updating the start and end page number in the database of the entry just added
+            try {
+                await sendEmail(email, author); // assuming sendEmail is async
+            } catch (emailError) {
+                console.error("❌Email sending failed:", emailError);
+                await deleteFiles([paperPath, photoPath, certificatePath]);
+                return res.status(500).json({
+                    message: "❌Failed to send email notification",
+                    status: false,
+                    error: emailError.message
+                });
+            }
             return res.status(201).json({
                 message: "Files uploaded and data saved successfully!",
                 status: true,
