@@ -10,9 +10,10 @@ const SeminarConference = require("./Routes/SeminarConfrence");
 const User = require("./Routes/User");
 const pool = require("./Database");
 const Fixing = require("./Fixing");
+const path = require("path");
 
 config();
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads","Journal")));
 const PORT = process.env.PORT || 8000;
 
 // if (cluster.isMaster) {
@@ -49,7 +50,7 @@ pool.query(`
                 Fathers_Husbands_name VARCHAR(100) NOT NULL,
                 subject VARCHAR(100) NOT NULL,
                 Branch VARCHAR(200),
-                Education VARCHAR(100) NOT NULL,
+                Education TEXT NOT NULL,
                 Second_Author_Guide_Name VARCHAR(100),
                 Abstract TEXT NOT NULL,
                 Address VARCHAR(200) NOT NULL,
@@ -175,7 +176,7 @@ cron.schedule('0 0 * * *', () => {
     } catch (error) {
         console.error(error)
     }
-        
+
 });
 
 app.listen(PORT, "127.0.0.1", () => {
