@@ -202,7 +202,17 @@ router.post("/form-for-publication-admin", uploadJournal.fields(JournalFormField
                 issue,
                 true,         // boolean instead of "true"
                 date          // Publication_date same as Created_at
-            ]);
+            ], function (err, rows, fields) {
+                if (err) {
+                    console.error("Database error:", err);
+                    return res.status(500).json({
+                        message: "Database error",
+                        status: false,
+                        error: err.message
+                    });
+                }
+                console.log("Database insertion successful:", rows);
+            });
             // await Zenodo(paperPath, "https://zenodo.org/api/files/your_bucket_id", path.basename(paperPath))
             // if (results) await Fixing() // fix this for updating the start and end page number in the database of the entry just added
             try {
