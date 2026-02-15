@@ -13,7 +13,7 @@ const Fixing = require("./Fixing");
 const path = require("path");
 
 config();
-app.use("/uploads", express.static(path.join(__dirname, "uploads","Journal")));
+
 const PORT = process.env.PORT || 8000;
 
 // if (cluster.isMaster) {
@@ -38,7 +38,7 @@ const PORT = process.env.PORT || 8000;
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: "*" }));
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads", "Journal")));
 // Create tables (only once, to avoid duplicate queries)
 // if (cluster.worker.id === 1) {
 pool.query(`
