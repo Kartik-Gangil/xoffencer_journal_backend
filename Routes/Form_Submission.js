@@ -13,7 +13,7 @@ const CreateCertificate = require("../Certificate");
 const createOrder = require('../Payment_Service')
 const crypto = require('crypto')
 // const Fixing = require("../Fixing");
-// const Zenodo = require("./zenodo");
+const { createDeposition, Zenodo, attachMetadata, publishDeposition, waitForFileReady } = require("./zenodo");
 
 // File fields for multer
 const JournalFormFields = [
@@ -132,12 +132,14 @@ router.post("/form-for-publication", uploadJournal.fields(JournalFormFields), as
 
 
 router.post("/form-for-publication-admin", uploadJournal.fields(JournalFormFields), async (req, res) => {
-
+    let paperPath = null;
+    let photoPath = null;
+    let certificatePath = null;
     try {
 
-        const paperPath = req.files["paperIcon"] ? req.files["paperIcon"][0].path : null;
-        const photoPath = req.files["photo"] ? req.files["photo"][0].path : null;
-        const certificatePath = req.files["marksheet"] ? req.files["marksheet"][0].path : null;
+        paperPath = req.files["paperIcon"] ? req.files["paperIcon"][0].path : null;
+        photoPath = req.files["photo"] ? req.files["photo"][0].path : null;
+        certificatePath = req.files["marksheet"] ? req.files["marksheet"][0].path : null;
 
 
         // Validate email format
@@ -152,6 +154,16 @@ router.post("/form-for-publication-admin", uploadJournal.fields(JournalFormField
         // const order = await createOrder(amount); //integrate the payment in this route
         const { volume, issue } = send(date)
         // console.log({ volume, issue })
+
+        await waitForFileReady(paperPath); // Ensure file is ready before upload
+        const deposition = await createDeposition();
+        await Zenodo(path.resolve(paperPath), deposition.links.bucket, path.basename(paperPath))
+
+        await attachMetadata(deposition.id, req.body);
+
+        const published = await publishDeposition(deposition.id);
+
+        console.log("DOI:", published.doi);
 
         // Insert data into database
         const query = `
@@ -175,9 +187,10 @@ router.post("/form-for-publication-admin", uploadJournal.fields(JournalFormField
                 Volume,
                 Issue,
                 isPublished,
-                Publication_date 
+                Publication_date,
+                DOI 
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
             `;
 
         try {
@@ -201,7 +214,8 @@ router.post("/form-for-publication-admin", uploadJournal.fields(JournalFormField
                 volume,
                 issue,
                 true,         // boolean instead of "true"
-                date          // Publication_date same as Created_at
+                date,          // Publication_date same as Created_at
+                published.doi
             ], function (err, rows, fields) {
                 if (err) {
                     console.error("Database error:", err);
@@ -213,7 +227,9 @@ router.post("/form-for-publication-admin", uploadJournal.fields(JournalFormField
                 }
                 console.log("Database insertion successful:", rows);
             });
-            // await Zenodo(paperPath, "https://zenodo.org/api/files/your_bucket_id", path.basename(paperPath))
+            console.log("ABSOLUTE PATH:", path.resolve(path.resolve(paperPath)));
+
+
             // if (results) await Fixing() // fix this for updating the start and end page number in the database of the entry just added
             try {
                 await sendEmail(email, author); // assuming sendEmail is async
@@ -596,7 +612,7 @@ router.post('/:id', (req, res) => {
 
     const { id } = req.params;
     const ID = parseInt(id)
-    query = `SELECT Abstract , Author_Name,Branch,Created_at,Journal_Type,Second_Author_Guide_Name,Title_of_paper,id,subject,Volume,Issue FROM Journal where id = ?`;
+    query = `SELECT Abstract , Author_Name,Branch,Created_at,Journal_Type,Second_Author_Guide_Name,Title_of_paper,id,subject,Volume,Issue , DOI FROM Journal where id = ?`;
 
     // Execute the query
     pool.query(query, [ID], (error, results) => {
