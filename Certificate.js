@@ -1,20 +1,31 @@
 const fs = require('fs');
-const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const { PDFDocument, rgb } = require('pdf-lib');
 const fontkit = require('fontkit');
 const path = require('path');
 
 const fontBytes = fs.readFileSync('./fonts/Tangerine-Bold.ttf');
+const boldFontBytes = fs.readFileSync('./fonts/NotoSansDevanagari-Regular.ttf');
+
+function cleanText(text) {
+    return text
+        .replace(/\uFFFE/g, '')
+        .replace(/\uFEFF/g, '')
+        .trim();
+}
 
 async function CreateCertificate(name, id, Title) {
     try {
         const certificatePDF = fs.readFileSync('./blank_certificate.pdf')
         const pdfDoc = await PDFDocument.load(certificatePDF);
         const pages = pdfDoc.getPages();
+        // sanetize the text come in from the db as request
+        name = cleanText(name);
+        Title = cleanText(Title);
 
 
         // font
         pdfDoc.registerFontkit(fontkit);
-        const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        const boldFont = await pdfDoc.embedFont(boldFontBytes);
         const cursiveFont = await pdfDoc.embedFont(fontBytes);
 
 
@@ -29,7 +40,6 @@ async function CreateCertificate(name, id, Title) {
             // keep Y the same as before
             const Author_name = height - 318;
             const Paper_title = height - 368;
-
             page.drawText(name, {
                 x: centerX,
                 y: Author_name,
