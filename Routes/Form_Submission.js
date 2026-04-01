@@ -581,7 +581,7 @@ router.get('/:type/:year/:issue', async (req, res) => {
                   id, Title_of_paper, Author_Name, subject, Created_at
             FROM Journal
             WHERE Journal_Type = ? AND Year = ? AND Issue = ? And isPublished = true
-            ORDER BY id
+            ORDER BY Publication_date
             LIMIT ? OFFSET ?;
         `;
 
